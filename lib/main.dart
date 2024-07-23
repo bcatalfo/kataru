@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_vertexai/firebase_vertexai.dart';
-import 'package:http/http.dart' as http;
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:googleapis/texttospeech/v1.dart';
 import 'package:audioplayers/audioplayers.dart';
