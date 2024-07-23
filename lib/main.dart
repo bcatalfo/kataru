@@ -57,6 +57,8 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isPlaying = false;
   bool _showTranslations = false;
   String _narrationSessionId = '';
+  String _difficultyLevel = 'A1';
+  final List<String> _difficultyLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
   final List<Map<String, String>> _languages = [
     {'name': 'English (US)', 'code': 'en-US'},
@@ -111,7 +113,7 @@ class _MyHomePageState extends State<MyHomePage> {
         FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-flash');
     final prompt = [
       Content.text(
-          'Create a unique, short, and simple story in $_targetLanguage for language learning beginners. Each sentence should be separated by a newline character "\\n". Translate the story into $_nativeLanguage. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.')
+          'Create a unique, short story in $_targetLanguage for language learning beginners at $_difficultyLevel level. Each sentence should be separated by a newline character "\\n". Translate the story into $_nativeLanguage. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.')
     ];
     final response = await model.generateContent(prompt);
 
@@ -307,6 +309,34 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void _showDifficultyDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Difficulty Level'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: _difficultyLevels.map((level) {
+              return RadioListTile<String>(
+                title: Text(level),
+                value: level,
+                groupValue: _difficultyLevel,
+                onChanged: (String? value) {
+                  setState(() {
+                    _difficultyLevel = value!;
+                  });
+                  _generateNewStory();
+                  Navigator.of(context).pop();
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
   void _showSettingsDialog() {
     showDialog(
       context: context,
@@ -408,6 +438,12 @@ class _MyHomePageState extends State<MyHomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  TextButton(
+                    onPressed: _showDifficultyDialog,
+                    child: Text(_difficultyLevel,
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
                     onPressed: _previousSentence,
