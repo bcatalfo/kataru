@@ -57,6 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<File> _audioFiles = [];
   bool _isPlaying = false;
   bool _showTranslations = false;
+  String _narrationSessionId = '';
 
   final List<Map<String, String>> _languages = [
     {'name': 'English (US)', 'code': 'en-US'},
@@ -93,6 +94,19 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _generateNewStory() async {
+    // Change the narration session ID to stop any ongoing narration
+    setState(() {
+      _narrationSessionId = DateTime.now().millisecondsSinceEpoch.toString();
+      _isPlaying = false;
+      _audioFiles.clear();
+      _sentences.clear();
+      _translations.clear();
+    });
+
+    // Stop the current audio player
+    await _audioPlayer.stop();
+
+    // Generate the new story
     final model =
         FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-flash');
     final prompt = [
@@ -127,14 +141,14 @@ class _MyHomePageState extends State<MyHomePage> {
     debugPrint('Translations: $_translations');
 
     await _generateAudioFiles();
-    await _narrateCurrentSentence();
+    await _narrateCurrentSentence(_narrationSessionId);
   }
 
   List<String> _splitSentences(String text) {
     return text
         .split('\n')
         .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
+        .where((s) => s.isNotEmpty && s != '\\')
         .toList();
   }
 
@@ -184,8 +198,10 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  Future<void> _narrateCurrentSentence() async {
-    if (_audioFiles.isEmpty || _sentenceIndex >= _sentences.length) return;
+  Future<void> _narrateCurrentSentence(String sessionId) async {
+    if (_audioFiles.isEmpty ||
+        _sentenceIndex >= _sentences.length ||
+        sessionId != _narrationSessionId) return;
 
     final sentenceFile = _audioFiles[_sentenceIndex];
 
@@ -197,6 +213,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
       // Wait for the audio to complete
       await _audioPlayer.onPlayerComplete.first;
+
+      if (sessionId != _narrationSessionId)
+        return; // Exit if the session ID has changed
 
       setState(() {
         _isPlaying = false;
@@ -212,7 +231,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ? _translations[_sentenceIndex]
                   : '';
         });
-        await _narrateCurrentSentence();
+        await _narrateCurrentSentence(sessionId);
       } else {
         debugPrint('Starting over');
         // Repeat the story from the beginning
@@ -224,7 +243,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ? _translations[0]
                   : '';
         });
-        await _narrateCurrentSentence();
+        await _narrateCurrentSentence(sessionId);
       }
     } catch (e) {
       print('Error playing audio file: $e');
@@ -248,6 +267,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _previousSentence() {
     if (_sentenceIndex > 0) {
       setState(() {
+        _narrationSessionId = DateTime.now().millisecondsSinceEpoch.toString();
         _sentenceIndex--;
         _currentSentence = _sentences[_sentenceIndex];
         _currentSentenceTranslation =
@@ -257,13 +277,14 @@ class _MyHomePageState extends State<MyHomePage> {
       });
 
       _audioPlayer.stop();
-      _narrateCurrentSentence();
+      _narrateCurrentSentence(_narrationSessionId);
     }
   }
 
   void _nextSentence() {
     if (_sentenceIndex < _sentences.length - 1) {
       setState(() {
+        _narrationSessionId = DateTime.now().millisecondsSinceEpoch.toString();
         _sentenceIndex++;
         _currentSentence = _sentences[_sentenceIndex];
         _currentSentenceTranslation =
@@ -273,7 +294,7 @@ class _MyHomePageState extends State<MyHomePage> {
       });
 
       _audioPlayer.stop();
-      _narrateCurrentSentence();
+      _narrateCurrentSentence(_narrationSessionId);
     }
   }
 
