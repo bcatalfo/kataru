@@ -81,6 +81,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _initializeTTS();
+    _generateNewStory();
   }
 
   Future<void> _initializeTTS() async {
