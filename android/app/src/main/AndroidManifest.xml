@@ -3,6 +3,12 @@
         android:label="kataru"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        
+        <!-- Add this meta-data tag -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-5182564155438350~7473293469"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

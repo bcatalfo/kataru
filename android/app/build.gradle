@@ -28,7 +28,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace = "com.catalfotech.kataru"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 34 // Update to latest compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -41,8 +41,8 @@ android {
         applicationId = "com.catalfotech.kataru"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdkVersion = 23 // Update to 23 as required by dependencies
+        targetSdkVersion = 34 // Update to latest targetSdkVersion
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
     }
