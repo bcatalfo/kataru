@@ -45,7 +45,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String _story = 'Press the button to generate a new story.';
   String _currentSentence = '';
   String _currentSentenceTranslation = '';
   String _nativeLanguage = 'en-US'; // Default to English (US)
@@ -128,7 +127,6 @@ class _MyHomePageState extends State<MyHomePage> {
     debugPrint('Translation Part: $translationPart');
 
     setState(() {
-      _story = storyPart;
       _sentences = _splitSentences(storyPart);
       _translations = _splitSentences(translationPart);
       _sentenceIndex = 0;
