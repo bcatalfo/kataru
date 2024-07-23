@@ -61,8 +61,8 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isPlaying = false;
   bool _showTranslations = false;
   String _narrationSessionId = '';
-  String _difficultyLevel = 'A1';
-  final List<String> _difficultyLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+  String _difficultyLevel = 'Easy';
+  final List<String> _difficultyLevels = ['Easy', 'Medium', 'Hard'];
 
   final List<Map<String, String>> _languages = [
     {'name': 'English (US) 🇺🇸', 'code': 'en-US'},
@@ -224,17 +224,34 @@ class _MyHomePageState extends State<MyHomePage> {
       "spiritual journeys"
     ];
 
-// Update the _generateNewStory function to pick a genre randomly and include it in the prompt
     final targetLanguageName = _languages
         .firstWhere((lang) => lang['code'] == _targetLanguage)['name'];
     final nativeLanguageName = _languages
         .firstWhere((lang) => lang['code'] == _nativeLanguage)['name'];
     final randomGenre = (genres..shuffle()).first;
 
+    String difficultyDescription;
+
+    switch (_difficultyLevel) {
+      case 'Easy':
+        difficultyDescription = 'Use simple vocabulary and short sentences.';
+        break;
+      case 'Medium':
+        difficultyDescription = 'Use moderate vocabulary and sentence length.';
+        break;
+      case 'Hard':
+        difficultyDescription = 'Use complex vocabulary and longer sentences.';
+        break;
+      default:
+        difficultyDescription = 'Use simple vocabulary and short sentences.';
+    }
+
     final promptText =
-        'Create an interesting $randomGenre story in $targetLanguageName at $_difficultyLevel level, based on the European scale. The story should be suitable for language learners and match the specified difficulty level. Use simple and clear language for lower levels. Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
+        'Create a unique and interesting $randomGenre story in $targetLanguageName at a $_difficultyLevel difficulty level. $difficultyDescription Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
 
     final prompt = [Content.text(promptText)];
+
+    debugPrint('prompt: $promptText');
 
     debugPrint('prompt: $promptText');
     final response = await model.generateContent(prompt);
