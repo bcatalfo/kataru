@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'firebase_options.dart';
 import 'package:firebase_vertexai/firebase_vertexai.dart';
 import 'package:googleapis_auth/auth_io.dart';
@@ -9,12 +10,14 @@ import 'package:googleapis/texttospeech/v1.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'dart:math';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  MobileAds.instance.initialize();
   runApp(const MyApp());
 }
 
@@ -44,6 +47,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  InterstitialAd? _interstitialAd;
+  bool _isInterstitialAdReady = false;
   String _currentSentence = '';
   String _currentSentenceTranslation = '';
   String _nativeLanguage = 'en-US'; // Default to English (US)
@@ -81,6 +86,56 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     _initializeTTS();
     _generateNewStory();
+    _loadInterstitialAd();
+  }
+
+  @override
+  void dispose() {
+    _interstitialAd?.dispose();
+    super.dispose();
+  }
+
+  void _loadInterstitialAd() {
+    InterstitialAd.load(
+      adUnitId: 'ca-app-pub-3940256099942544/1033173712',
+      request: AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _interstitialAd = ad;
+          _interstitialAd!.setImmersiveMode(true);
+          _interstitialAd!.fullScreenContentCallback =
+              FullScreenContentCallback(
+            onAdShowedFullScreenContent: (InterstitialAd ad) {
+              // Pause audio when the ad is shown
+              _pauseAudio();
+            },
+            onAdDismissedFullScreenContent: (InterstitialAd ad) {
+              // Resume audio when the ad is dismissed
+              _resumeAudio();
+              ad.dispose();
+              _loadInterstitialAd(); // Load a new ad
+            },
+            onAdFailedToShowFullScreenContent:
+                (InterstitialAd ad, AdError error) {
+              ad.dispose();
+              _loadInterstitialAd(); // Load a new ad
+            },
+          );
+        },
+        onAdFailedToLoad: (error) {
+          // Handle the error
+        },
+      ),
+    );
+  }
+
+  void _showInterstitialAd() {
+    if (_interstitialAd != null) {
+      _interstitialAd!.show();
+    } else {
+      // Load a new ad if the current ad is null
+      _loadInterstitialAd();
+    }
   }
 
   Future<void> _initializeTTS() async {
@@ -93,6 +148,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _generateNewStory() async {
+    // Show interstitial ad randomly
+    if (Random().nextInt(2) == 0) {
+      _showInterstitialAd();
+    }
     // Change the narration session ID to stop any ongoing narration
     setState(() {
       _narrationSessionId = DateTime.now().millisecondsSinceEpoch.toString();
@@ -114,7 +173,7 @@ class _MyHomePageState extends State<MyHomePage> {
         .firstWhere((lang) => lang['code'] == _nativeLanguage)['name'];
 
     final promptText =
-        'Create an interesting story in $targetLanguageName at $_difficultyLevel level, based on the European scale. Choose a random topic for the story. The story should be suitable for language learners. Use simple and clear language for lower levels. Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
+        'Create an interesting story in $targetLanguageName at the $_difficultyLevel level, based on the European scale. Choose a random topic for the story. The story should be suitable for language learners. Use simple and clear language for lower levels. Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
 
     final prompt = [Content.text(promptText)];
 
