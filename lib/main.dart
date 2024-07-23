@@ -108,6 +108,7 @@ class _MyHomePageState extends State<MyHomePage> {
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           _interstitialAd = ad;
+          _isInterstitialAdReady = true;
           _interstitialAd!.setImmersiveMode(true);
           _interstitialAd!.fullScreenContentCallback =
               FullScreenContentCallback(
@@ -116,8 +117,8 @@ class _MyHomePageState extends State<MyHomePage> {
               _pauseAudio();
             },
             onAdDismissedFullScreenContent: (InterstitialAd ad) {
-              // Resume audio when the ad is dismissed
-              _resumeAudio();
+              // Generate the new story after the ad is dismissed
+              _generateAndDisplayNewStory();
               ad.dispose();
               _loadInterstitialAd(); // Load a new ad
             },
@@ -129,6 +130,7 @@ class _MyHomePageState extends State<MyHomePage> {
           );
         },
         onAdFailedToLoad: (error) {
+          _isInterstitialAdReady = false;
           // Handle the error
         },
       ),
@@ -158,10 +160,14 @@ class _MyHomePageState extends State<MyHomePage> {
     await _audioPlayer.stop();
 
     // Show interstitial ad randomly
-    if (Random().nextInt(2) == 0) {
+    if (Random().nextInt(2) == 0 && _isInterstitialAdReady) {
       _showInterstitialAd();
+      return; // Do not generate a story now, it will be handled in the ad callback
     }
+    _generateAndDisplayNewStory();
+  }
 
+  Future<void> _generateAndDisplayNewStory() async {
     // Change the narration session ID to stop any ongoing narration
     setState(() {
       _narrationSessionId = DateTime.now().millisecondsSinceEpoch.toString();
