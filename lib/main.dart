@@ -61,21 +61,19 @@ class _MyHomePageState extends State<MyHomePage> {
   final List<String> _difficultyLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
   final List<Map<String, String>> _languages = [
-    {'name': 'English (US)', 'code': 'en-US'},
-    {'name': 'Japanese', 'code': 'ja-JP'},
-    {'name': 'Spanish (Spain)', 'code': 'es-ES'},
-    {'name': 'French', 'code': 'fr-FR'},
-    {'name': 'German', 'code': 'de-DE'},
-    {'name': 'Italian', 'code': 'it-IT'},
-    {'name': 'Mandarin (Simplified)', 'code': 'zh-CN'},
-    {'name': 'Mandarin (Traditional)', 'code': 'zh-TW'},
-    {'name': 'Korean', 'code': 'ko-KR'},
-    {'name': 'Russian', 'code': 'ru-RU'},
-    {'name': 'Portuguese (Brazil)', 'code': 'pt-BR'},
-    {'name': 'Arabic', 'code': 'ar-XA'},
-    {'name': 'Hindi', 'code': 'hi-IN'},
+    {'name': 'English (US) 🇺🇸', 'code': 'en-US'},
+    {'name': 'Japanese 🇯🇵', 'code': 'ja-JP'},
+    {'name': 'Spanish (Spain) 🇪🇸', 'code': 'es-ES'},
+    {'name': 'Mandarin Chinese (Simplified) 🇨🇳', 'code': 'zh-CN'},
+    {'name': 'Mandarin Chinese (Traditional) 🇹🇼', 'code': 'zh-TW'},
+    {'name': 'Korean 🇰🇷', 'code': 'ko-KR'},
+    {'name': 'French 🇫🇷', 'code': 'fr-FR'},
+    {'name': 'German 🇩🇪', 'code': 'de-DE'},
+    {'name': 'Portuguese (Brazil) 🇧🇷', 'code': 'pt-BR'},
+    {'name': 'Russian 🇷🇺', 'code': 'ru-RU'},
+    {'name': 'Hindi 🇮🇳', 'code': 'hi-IN'},
+    {'name': 'Italian 🇮🇹', 'code': 'it-IT'},
   ];
-
   final _scopes = [TexttospeechApi.cloudPlatformScope];
   late final TexttospeechApi _textToSpeechApi;
 
@@ -164,39 +162,37 @@ class _MyHomePageState extends State<MyHomePage> {
           _getVoiceForLanguage(_targetLanguage), tempDir, i);
     }
 
-    print('Generated audio files: $_audioFiles');
+    debugPrint('Generated audio files: $_audioFiles');
   }
 
   String _getVoiceForLanguage(String languageCode) {
     switch (languageCode) {
       case 'ja-JP':
-        return 'ja-JP-Wavenet-A';
+        return 'ja-JP-Neural2-B'; // Japanese (Female)
       case 'en-US':
-        return 'en-US-Wavenet-D';
+        return 'en-US-Neural2-D'; // English US (Male)
       case 'es-ES':
-        return 'es-ES-Wavenet-A';
-      case 'fr-FR':
-        return 'fr-FR-Wavenet-A';
-      case 'de-DE':
-        return 'de-DE-Wavenet-A';
-      case 'it-IT':
-        return 'it-IT-Wavenet-A';
+        return 'es-ES-Neural2-A'; // Spanish Spain (Female)
       case 'zh-CN':
-        return 'cmn-CN-Wavenet-A';
+        return 'cmn-CN-Wavenet-A'; // Mandarin Chinese Simplified (Female)
       case 'zh-TW':
-        return 'cmn-TW-Wavenet-A';
+        return 'cmn-TW-Wavenet-A'; // Mandarin Chinese Traditional (Female)
       case 'ko-KR':
-        return 'ko-KR-Wavenet-A';
-      case 'ru-RU':
-        return 'ru-RU-Wavenet-A';
+        return 'ko-KR-Neural2-A'; // Korean (Female)
+      case 'fr-FR':
+        return 'fr-FR-Neural2-A'; // French (Female)
+      case 'de-DE':
+        return 'de-DE-Neural2-A'; // German (Female)
       case 'pt-BR':
-        return 'pt-BR-Wavenet-A';
-      case 'ar-XA':
-        return 'ar-XA-Wavenet-A';
+        return 'pt-BR-Neural2-A'; // Portuguese Brazil (Female)
+      case 'ru-RU':
+        return 'ru-RU-Wavenet-A'; // Russian (Female)
       case 'hi-IN':
-        return 'hi-IN-Wavenet-A';
+        return 'hi-IN-Neural2-A'; // Hindi (Female)
+      case 'it-IT':
+        return 'it-IT-Neural2-A'; // Italian (Female)
       default:
-        return 'en-US-Wavenet-D'; // Default to English US
+        return 'en-US-Wavenet-D'; // Default to English US (Male)
     }
   }
 
@@ -362,54 +358,58 @@ class _MyHomePageState extends State<MyHomePage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Settings'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Native Language:'),
-              DropdownButton<String>(
-                value: _nativeLanguage,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _nativeLanguage = newValue!;
-                  });
-                },
-                items: _languages.map<DropdownMenuItem<String>>(
-                    (Map<String, String> language) {
-                  return DropdownMenuItem<String>(
-                    value: language['code'],
-                    child: Text(language['name']!),
-                  );
-                }).toList(),
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('Settings'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Native Language:'),
+                  DropdownButton<String>(
+                    value: _nativeLanguage,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _nativeLanguage = newValue!;
+                      });
+                    },
+                    items: _languages.map<DropdownMenuItem<String>>(
+                        (Map<String, String> language) {
+                      return DropdownMenuItem<String>(
+                        value: language['code'],
+                        child: Text(language['name']!),
+                      );
+                    }).toList(),
+                  ),
+                  const Text('Target Language:'),
+                  DropdownButton<String>(
+                    value: _targetLanguage,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _targetLanguage = newValue!;
+                      });
+                      _generateNewStory();
+                    },
+                    items: _languages.map<DropdownMenuItem<String>>(
+                        (Map<String, String> language) {
+                      return DropdownMenuItem<String>(
+                        value: language['code'],
+                        child: Text(language['name']!),
+                      );
+                    }).toList(),
+                  ),
+                ],
               ),
-              const Text('Target Language:'),
-              DropdownButton<String>(
-                value: _targetLanguage,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _targetLanguage = newValue!;
-                  });
-                  _generateNewStory();
-                },
-                items: _languages.map<DropdownMenuItem<String>>(
-                    (Map<String, String> language) {
-                  return DropdownMenuItem<String>(
-                    value: language['code'],
-                    child: Text(language['name']!),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Close'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );
