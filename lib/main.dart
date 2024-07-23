@@ -445,7 +445,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
+                      SelectableText(
                         _currentSentence,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
