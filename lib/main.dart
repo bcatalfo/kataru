@@ -173,7 +173,28 @@ class _MyHomePageState extends State<MyHomePage> {
         return 'ja-JP-Wavenet-A';
       case 'en-US':
         return 'en-US-Wavenet-D';
-      // Add other languages and their respective voices here
+      case 'es-ES':
+        return 'es-ES-Wavenet-A';
+      case 'fr-FR':
+        return 'fr-FR-Wavenet-A';
+      case 'de-DE':
+        return 'de-DE-Wavenet-A';
+      case 'it-IT':
+        return 'it-IT-Wavenet-A';
+      case 'zh-CN':
+        return 'cmn-CN-Wavenet-A';
+      case 'zh-TW':
+        return 'cmn-TW-Wavenet-A';
+      case 'ko-KR':
+        return 'ko-KR-Wavenet-A';
+      case 'ru-RU':
+        return 'ru-RU-Wavenet-A';
+      case 'pt-BR':
+        return 'pt-BR-Wavenet-A';
+      case 'ar-XA':
+        return 'ar-XA-Wavenet-A';
+      case 'hi-IN':
+        return 'hi-IN-Wavenet-A';
       default:
         return 'en-US-Wavenet-D'; // Default to English US
     }
