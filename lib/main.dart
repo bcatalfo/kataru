@@ -61,8 +61,14 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isPlaying = false;
   bool _showTranslations = false;
   String _narrationSessionId = '';
-  String _difficultyLevel = 'Easy';
-  final List<String> _difficultyLevels = ['Easy', 'Medium', 'Hard'];
+  String _difficultyLevel = 'Absolute Beginner';
+  final List<String> _difficultyLevels = [
+    'Absolute Beginner',
+    'Beginner',
+    'Easy',
+    'Intermediate',
+    'Advanced'
+  ];
 
   final List<Map<String, String>> _languages = [
     {'name': 'English (US) 🇺🇸', 'code': 'en-US'},
@@ -155,6 +161,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if (Random().nextInt(2) == 0) {
       _showInterstitialAd();
     }
+
     // Change the narration session ID to stop any ongoing narration
     setState(() {
       _narrationSessionId = DateTime.now().millisecondsSinceEpoch.toString();
@@ -233,14 +240,25 @@ class _MyHomePageState extends State<MyHomePage> {
     String difficultyDescription;
 
     switch (_difficultyLevel) {
+      case 'Absolute Beginner':
+        difficultyDescription =
+            'Use very simple vocabulary and very short sentences. This story is for absolute beginners learning the language.';
+        break;
+      case 'Beginner':
+        difficultyDescription =
+            'Use simple vocabulary and short sentences. This story is for beginners learning the language.';
+        break;
       case 'Easy':
-        difficultyDescription = 'Use simple vocabulary and short sentences.';
+        difficultyDescription =
+            'Use basic vocabulary and moderate sentences. This story is for easy level learners.';
         break;
-      case 'Medium':
-        difficultyDescription = 'Use moderate vocabulary and sentence length.';
+      case 'Intermediate':
+        difficultyDescription =
+            'Use more complex vocabulary and longer sentences. This story is for intermediate learners.';
         break;
-      case 'Hard':
-        difficultyDescription = 'Use complex vocabulary and longer sentences.';
+      case 'Advanced':
+        difficultyDescription =
+            'Use advanced vocabulary and complex sentences. This story is for advanced learners.';
         break;
       default:
         difficultyDescription = 'Use simple vocabulary and short sentences.';
@@ -250,8 +268,6 @@ class _MyHomePageState extends State<MyHomePage> {
         'Create a unique and interesting $randomGenre story in $targetLanguageName at a $_difficultyLevel difficulty level. $difficultyDescription Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
 
     final prompt = [Content.text(promptText)];
-
-    debugPrint('prompt: $promptText');
 
     debugPrint('prompt: $promptText');
     final response = await model.generateContent(prompt);
@@ -467,34 +483,6 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _showDifficultyDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Select Difficulty Level'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: _difficultyLevels.map((level) {
-              return RadioListTile<String>(
-                title: Text(level),
-                value: level,
-                groupValue: _difficultyLevel,
-                onChanged: (String? value) {
-                  setState(() {
-                    _difficultyLevel = value!;
-                  });
-                  _generateNewStory();
-                  Navigator.of(context).pop();
-                },
-              );
-            }).toList(),
-          ),
-        );
-      },
-    );
-  }
-
   void _showSettingsDialog() {
     showDialog(
       context: context,
@@ -536,6 +524,23 @@ class _MyHomePageState extends State<MyHomePage> {
                       return DropdownMenuItem<String>(
                         value: language['code'],
                         child: Text(language['name']!),
+                      );
+                    }).toList(),
+                  ),
+                  const Text('Difficulty Level:'),
+                  DropdownButton<String>(
+                    value: _difficultyLevel,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _difficultyLevel = newValue!;
+                      });
+                      _generateNewStory();
+                    },
+                    items: _difficultyLevels
+                        .map<DropdownMenuItem<String>>((String level) {
+                      return DropdownMenuItem<String>(
+                        value: level,
+                        child: Text(level),
                       );
                     }).toList(),
                   ),
@@ -600,12 +605,6 @@ class _MyHomePageState extends State<MyHomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  TextButton(
-                    onPressed: _showDifficultyDialog,
-                    child: Text(_difficultyLevel,
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
                     onPressed: _previousSentence,
