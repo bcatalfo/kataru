@@ -92,27 +92,26 @@ class _MyHomePageState extends State<MyHomePage> {
     _textToSpeechApi = TexttospeechApi(authClient);
   }
 
-  List<String> _splitSentences(String text) {
-    return text.split('\n').where((s) => s.trim().isNotEmpty).toList();
-  }
-
   Future<void> _generateNewStory() async {
     final model =
         FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-flash');
     final prompt = [
       Content.text(
-          'Create a short and simple story in $_targetLanguage for language learning beginners. Each sentence should be separated by a newline character "\\n". Translate the story into $_nativeLanguage. Format the output as: Story: <story in target language>\\n\\nTranslation: <translation in native language>')
+          'Create a unique, short, and simple story in $_targetLanguage for language learning beginners. Each sentence should be separated by a newline character "\\n". Translate the story into $_nativeLanguage. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.')
     ];
     final response = await model.generateContent(prompt);
 
     debugPrint('Generated Story: ${response.text}');
 
-    final parts = response.text?.split('Translation: ') ?? [];
-    final storyPart = parts.isNotEmpty
-        ? parts[0].replaceFirst('Story: ', '').replaceAll('\\n', ' ')
-        : '';
+    // Process and clean up the response text
+    final parts = response.text?.split('|SEPARATOR|') ?? [];
+    final storyPart =
+        parts.isNotEmpty ? parts[0].replaceAll(r'\n', '\n').trim() : '';
     final translationPart =
-        parts.length > 1 ? parts[1].replaceAll('\\n', ' ') : '';
+        parts.length > 1 ? parts[1].replaceAll(r'\n', '\n').trim() : '';
+
+    debugPrint('Story Part: $storyPart');
+    debugPrint('Translation Part: $translationPart');
 
     setState(() {
       _story = storyPart;
@@ -124,8 +123,19 @@ class _MyHomePageState extends State<MyHomePage> {
           _translations.isNotEmpty ? _translations[0] : '';
     });
 
+    debugPrint('Sentences: $_sentences');
+    debugPrint('Translations: $_translations');
+
     await _generateAudioFiles();
-    _narrateCurrentSentence();
+    await _narrateCurrentSentence();
+  }
+
+  List<String> _splitSentences(String text) {
+    return text
+        .split('\n')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
   }
 
   Future<void> _generateAudioFiles() async {
@@ -185,33 +195,37 @@ class _MyHomePageState extends State<MyHomePage> {
         _isPlaying = true;
       });
 
-      _audioPlayer.onPlayerComplete.listen((event) {
-        setState(() {
-          _isPlaying = false;
-        });
-        if (_sentenceIndex < _sentences.length - 1) {
-          setState(() {
-            _sentenceIndex++;
-            _currentSentence = _sentences[_sentenceIndex];
-            _currentSentenceTranslation =
-                _showTranslations && _translations.isNotEmpty
-                    ? _translations[_sentenceIndex]
-                    : '';
-          });
-          _narrateCurrentSentence();
-        } else {
-          // Repeat the story from the beginning
-          setState(() {
-            _sentenceIndex = 0;
-            _currentSentence = _sentences[0];
-            _currentSentenceTranslation =
-                _showTranslations && _translations.isNotEmpty
-                    ? _translations[0]
-                    : '';
-          });
-          _narrateCurrentSentence();
-        }
+      // Wait for the audio to complete
+      await _audioPlayer.onPlayerComplete.first;
+
+      setState(() {
+        _isPlaying = false;
       });
+
+      if (_sentenceIndex < _sentences.length - 1) {
+        debugPrint('index: $_sentenceIndex');
+        setState(() {
+          _sentenceIndex++;
+          _currentSentence = _sentences[_sentenceIndex];
+          _currentSentenceTranslation =
+              _showTranslations && _translations.isNotEmpty
+                  ? _translations[_sentenceIndex]
+                  : '';
+        });
+        await _narrateCurrentSentence();
+      } else {
+        debugPrint('Starting over');
+        // Repeat the story from the beginning
+        setState(() {
+          _sentenceIndex = 0;
+          _currentSentence = _sentences[0];
+          _currentSentenceTranslation =
+              _showTranslations && _translations.isNotEmpty
+                  ? _translations[0]
+                  : '';
+        });
+        await _narrateCurrentSentence();
+      }
     } catch (e) {
       print('Error playing audio file: $e');
     }
