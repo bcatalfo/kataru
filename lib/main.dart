@@ -132,7 +132,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _sentenceIndex = 0;
       _currentSentence = _sentences.isNotEmpty ? _sentences[0] : '';
       _currentSentenceTranslation =
-          _translations.isNotEmpty ? _translations[0] : '';
+          _showTranslations && _translations.isNotEmpty ? _translations[0] : '';
     });
 
     debugPrint('Sentences: $_sentences');
