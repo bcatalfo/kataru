@@ -67,7 +67,8 @@ class _MyHomePageState extends State<MyHomePage> {
     'Beginner',
     'Easy',
     'Intermediate',
-    'Advanced'
+    'Advanced',
+    'Expert'
   ];
 
   final List<Map<String, String>> _languages = [
@@ -248,30 +249,27 @@ class _MyHomePageState extends State<MyHomePage> {
     switch (_difficultyLevel) {
       case 'Absolute Beginner':
         difficultyDescription =
-            'Use very simple vocabulary and very short sentences. This story is for absolute beginners learning the language.';
+            'Use very simple vocabulary and short sentences.';
         break;
       case 'Beginner':
-        difficultyDescription =
-            'Use simple vocabulary and short sentences. This story is for beginners learning the language.';
-        break;
-      case 'Easy':
-        difficultyDescription =
-            'Use basic vocabulary and moderate sentences. This story is for easy level learners.';
+        difficultyDescription = 'Use simple vocabulary and short sentences.';
         break;
       case 'Intermediate':
-        difficultyDescription =
-            'Use more complex vocabulary and longer sentences. This story is for intermediate learners.';
+        difficultyDescription = 'Use moderate vocabulary and sentence length.';
         break;
       case 'Advanced':
+        difficultyDescription = 'Use complex vocabulary and longer sentences.';
+        break;
+      case 'Expert':
         difficultyDescription =
-            'Use advanced vocabulary and complex sentences. This story is for advanced learners.';
+            'Use very complex vocabulary and intricate sentences.';
         break;
       default:
         difficultyDescription = 'Use simple vocabulary and short sentences.';
     }
 
     final promptText =
-        'Create a unique and interesting $randomGenre story in $targetLanguageName at a $_difficultyLevel difficulty level. $difficultyDescription Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
+        'Create a unique and interesting $randomGenre story in $targetLanguageName at a $_difficultyLevel difficulty level. This story is for learners of the language. $difficultyDescription Ensure that the story is grammatically correct and do not include pronunciations or Roman alphabet transcriptions in parentheses. Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
 
     final prompt = [Content.text(promptText)];
 
