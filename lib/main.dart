@@ -97,7 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _loadInterstitialAd() {
     InterstitialAd.load(
-      adUnitId: 'ca-app-pub-3940256099942544/1033173712',
+      adUnitId: 'ca-app-pub-3940256099942544/4411468910',
       request: AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
@@ -148,6 +148,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _generateNewStory() async {
+    // Stop the current audio player
+    await _audioPlayer.stop();
+
     // Show interstitial ad randomly
     if (Random().nextInt(2) == 0) {
       _showInterstitialAd();
@@ -160,9 +163,6 @@ class _MyHomePageState extends State<MyHomePage> {
       _sentences.clear();
       _translations.clear();
     });
-
-    // Stop the current audio player
-    await _audioPlayer.stop();
 
     // Generate the new story
     final model =
