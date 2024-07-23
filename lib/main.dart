@@ -167,13 +167,72 @@ class _MyHomePageState extends State<MyHomePage> {
     // Generate the new story
     final model =
         FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-flash');
+    final List<String> genres = [
+      "adventure",
+      "romance",
+      "mystery",
+      "historical fiction",
+      "science fiction",
+      "fantasy",
+      "horror",
+      "thriller",
+      "comedy",
+      "drama",
+      "slice of life",
+      "mythology",
+      "fairy tale",
+      "travel",
+      "food and cooking",
+      "sports",
+      "music",
+      "art",
+      "technology",
+      "environmental",
+      "cultural exploration",
+      "family and relationships",
+      "friendship",
+      "hero's journey",
+      "coming of age",
+      "holiday and celebrations",
+      "workplace stories",
+      "school and education",
+      "health and wellness",
+      "animals and nature",
+      "urban life",
+      "rural life",
+      "supernatural",
+      "crime and detective",
+      "war and conflict",
+      "exploration and discovery",
+      "space exploration",
+      "time travel",
+      "magical realism",
+      "folklore",
+      "legends",
+      "dystopian",
+      "utopian",
+      "post-apocalyptic",
+      "cyberpunk",
+      "steampunk",
+      "noir",
+      "political intrigue",
+      "psychological",
+      "self-discovery",
+      "moral dilemmas",
+      "social issues",
+      "philosophical",
+      "spiritual journeys"
+    ];
+
+// Update the _generateNewStory function to pick a genre randomly and include it in the prompt
     final targetLanguageName = _languages
         .firstWhere((lang) => lang['code'] == _targetLanguage)['name'];
     final nativeLanguageName = _languages
         .firstWhere((lang) => lang['code'] == _nativeLanguage)['name'];
+    final randomGenre = (genres..shuffle()).first;
 
     final promptText =
-        'Create an interesting story in $targetLanguageName at the $_difficultyLevel level, based on the European scale. Choose a random topic for the story. The story should be suitable for language learners. Use simple and clear language for lower levels. Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
+        'Create an interesting $randomGenre story in $targetLanguageName at $_difficultyLevel level, based on the European scale. The story should be suitable for language learners and match the specified difficulty level. Use simple and clear language for lower levels. Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
 
     final prompt = [Content.text(promptText)];
 
