@@ -11,6 +11,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -92,6 +93,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _initializeTTS();
+    _loadPreferences();
     _generateNewStory();
     _loadInterstitialAd();
   }
@@ -100,6 +102,23 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() {
     _interstitialAd?.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _nativeLanguage = prefs.getString('nativeLanguage') ?? 'en-US';
+      _targetLanguage = prefs.getString('targetLanguage') ?? 'ja-JP';
+      _difficultyLevel =
+          prefs.getString('difficultyLevel') ?? 'Absolute Beginner';
+    });
+  }
+
+  Future<void> _savePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('nativeLanguage', _nativeLanguage);
+    prefs.setString('targetLanguage', _targetLanguage);
+    prefs.setString('difficultyLevel', _difficultyLevel);
   }
 
   void _loadInterstitialAd() {
@@ -504,6 +523,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     onChanged: (String? newValue) {
                       setState(() {
                         _nativeLanguage = newValue!;
+                        _savePreferences();
                       });
                     },
                     items: _languages.map<DropdownMenuItem<String>>(
@@ -520,6 +540,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     onChanged: (String? newValue) {
                       setState(() {
                         _targetLanguage = newValue!;
+                        _savePreferences();
                       });
                       _generateNewStory();
                     },
@@ -537,6 +558,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     onChanged: (String? newValue) {
                       setState(() {
                         _difficultyLevel = newValue!;
+                        _savePreferences();
                       });
                       _generateNewStory();
                     },
