@@ -76,8 +76,8 @@ class _MyHomePageState extends State<MyHomePage> {
     {'name': 'English (US) 🇺🇸', 'code': 'en-US'},
     {'name': 'Japanese 🇯🇵', 'code': 'ja-JP'},
     {'name': 'Spanish (Spain) 🇪🇸', 'code': 'es-ES'},
-    {'name': 'Mandarin Chinese (Simplified) 🇨🇳', 'code': 'zh-CN'},
-    {'name': 'Mandarin Chinese (Traditional) 🇹🇼', 'code': 'zh-TW'},
+    {'name': 'Mandarin Chinese (Simplified Characters) 🇨🇳', 'code': 'zh-CN'},
+    {'name': 'Mandarin Chinese (Traditional Characters) 🇹🇼', 'code': 'zh-TW'},
     {'name': 'Korean 🇰🇷', 'code': 'ko-KR'},
     {'name': 'French 🇫🇷', 'code': 'fr-FR'},
     {'name': 'German 🇩🇪', 'code': 'de-DE'},
@@ -507,79 +507,96 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _showSettingsDialog() {
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            return AlertDialog(
-              title: const Text('Settings'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Native Language:'),
-                  DropdownButton<String>(
-                    value: _nativeLanguage,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _nativeLanguage = newValue!;
-                        _savePreferences();
-                      });
-                    },
-                    items: _languages.map<DropdownMenuItem<String>>(
-                        (Map<String, String> language) {
-                      return DropdownMenuItem<String>(
-                        value: language['code'],
-                        child: Text(language['name']!),
-                      );
-                    }).toList(),
-                  ),
-                  const Text('Target Language:'),
-                  DropdownButton<String>(
-                    value: _targetLanguage,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _targetLanguage = newValue!;
-                        _savePreferences();
-                      });
-                      _generateNewStory();
-                    },
-                    items: _languages.map<DropdownMenuItem<String>>(
-                        (Map<String, String> language) {
-                      return DropdownMenuItem<String>(
-                        value: language['code'],
-                        child: Text(language['name']!),
-                      );
-                    }).toList(),
-                  ),
-                  const Text('Difficulty Level:'),
-                  DropdownButton<String>(
-                    value: _difficultyLevel,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _difficultyLevel = newValue!;
-                        _savePreferences();
-                      });
-                      _generateNewStory();
-                    },
-                    items: _difficultyLevels
-                        .map<DropdownMenuItem<String>>((String level) {
-                      return DropdownMenuItem<String>(
-                        value: level,
-                        child: Text(level),
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('Close'),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
+            return FractionallySizedBox(
+              heightFactor:
+                  0.9, // Adjust this value to cover more or less of the screen
+              child: Scaffold(
+                appBar: AppBar(
+                  title: const Text('Settings'),
+                  actions: [
+                    TextButton(
+                      child: const Text('Close'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
                 ),
-              ],
+                body: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Native Language:'),
+                        DropdownButton<String>(
+                          value: _nativeLanguage,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _nativeLanguage = newValue!;
+                              _savePreferences();
+                            });
+                          },
+                          isExpanded: true,
+                          items: _languages.map<DropdownMenuItem<String>>(
+                              (Map<String, String> language) {
+                            return DropdownMenuItem<String>(
+                              value: language['code'],
+                              child: Text(language['name']!),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('Target Language:'),
+                        DropdownButton<String>(
+                          value: _targetLanguage,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _targetLanguage = newValue!;
+                              _savePreferences();
+                            });
+                            _generateNewStory();
+                          },
+                          isExpanded: true,
+                          items: _languages.map<DropdownMenuItem<String>>(
+                              (Map<String, String> language) {
+                            return DropdownMenuItem<String>(
+                              value: language['code'],
+                              child: Text(language['name']!),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('Difficulty Level:'),
+                        DropdownButton<String>(
+                          value: _difficultyLevel,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _difficultyLevel = newValue!;
+                              _savePreferences();
+                            });
+                            _generateNewStory();
+                          },
+                          isExpanded: true,
+                          items: _difficultyLevels
+                              .map<DropdownMenuItem<String>>((String level) {
+                            return DropdownMenuItem<String>(
+                              value: level,
+                              child: Text(level),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             );
           },
         );
