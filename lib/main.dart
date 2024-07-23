@@ -105,12 +105,18 @@ class _MyHomePageState extends State<MyHomePage> {
     // Stop the current audio player
     await _audioPlayer.stop();
 
+    // Get the full language and country name from the language list
+    String targetLanguageName = _languages
+        .firstWhere((lang) => lang['code'] == _targetLanguage)['name']!;
+    String nativeLanguageName = _languages
+        .firstWhere((lang) => lang['code'] == _nativeLanguage)['name']!;
+
     // Generate the new story
     final model =
         FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-flash');
     final prompt = [
       Content.text(
-          'Create a unique, short story in $_targetLanguage for language learning beginners at $_difficultyLevel level. Each sentence should be separated by a newline character "\\n". Translate the story into $_nativeLanguage. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.')
+          'Create a unique, short story in $targetLanguageName for language learning beginners at $_difficultyLevel level. Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.')
     ];
     final response = await model.generateContent(prompt);
 
