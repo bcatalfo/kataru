@@ -108,10 +108,17 @@ class _MyHomePageState extends State<MyHomePage> {
     // Generate the new story
     final model =
         FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-flash');
-    final prompt = [
-      Content.text(
-          'Create a unique, short story in ${_languages.firstWhere((lang) => lang['code'] == _targetLanguage)['name']} at $_difficultyLevel level, based on the European scale. Focus on stories that are unique to the culture and history of the language and country. Each sentence should be separated by a newline character "\\n". Translate the story into ${_languages.firstWhere((lang) => lang['code'] == _nativeLanguage)['name']}. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.')
-    ];
+    final targetLanguageName = _languages
+        .firstWhere((lang) => lang['code'] == _targetLanguage)['name'];
+    final nativeLanguageName = _languages
+        .firstWhere((lang) => lang['code'] == _nativeLanguage)['name'];
+
+    final promptText =
+        'Create an interesting story in $targetLanguageName at $_difficultyLevel level, based on the European scale. Choose a random topic for the story. The story should be suitable for language learners. Use simple and clear language for lower levels. Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
+
+    final prompt = [Content.text(promptText)];
+
+    debugPrint('prompt: $promptText');
     final response = await model.generateContent(prompt);
 
     debugPrint('Generated Story: ${response.text}');
