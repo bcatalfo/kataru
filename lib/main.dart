@@ -23,8 +23,63 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.system;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThemePreference();
+  }
+
+  Future<void> _loadThemePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final themeString = prefs.getString('themeMode') ?? 'system';
+    setState(() {
+      _themeMode = _stringToThemeMode(themeString);
+    });
+  }
+
+  ThemeMode _stringToThemeMode(String themeString) {
+    switch (themeString) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  Future<void> _saveThemePreference(ThemeMode themeMode) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('themeMode', _themeModeToString(themeMode));
+  }
+
+  String _themeModeToString(ThemeMode themeMode) {
+    switch (themeMode) {
+      case ThemeMode.light:
+        return 'light';
+      case ThemeMode.dark:
+        return 'dark';
+      default:
+        return 'system';
+    }
+  }
+
+  void _changeTheme(ThemeMode themeMode) {
+    setState(() {
+      _themeMode = themeMode;
+      _saveThemePreference(themeMode);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,15 +89,28 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.red[700]!),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Kataru'),
+      darkTheme: ThemeData.dark(),
+      themeMode: _themeMode,
+      home: MyHomePage(
+        title: 'Kataru',
+        onThemeChanged: _changeTheme,
+        themeMode: _themeMode,
+      ),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  const MyHomePage({
+    super.key,
+    required this.title,
+    required this.onThemeChanged,
+    required this.themeMode,
+  });
 
   final String title;
+  final Function(ThemeMode) onThemeChanged;
+  final ThemeMode themeMode;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -605,6 +673,40 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        const Text('Theme:'),
+                        Wrap(
+                          spacing: 8.0,
+                          children: [
+                            ChoiceChip(
+                              label: const Text('System Default'),
+                              selected: widget.themeMode == ThemeMode.system,
+                              onSelected: (bool selected) {
+                                if (selected) {
+                                  widget.onThemeChanged(ThemeMode.system);
+                                }
+                              },
+                            ),
+                            ChoiceChip(
+                              label: const Text('Light'),
+                              selected: widget.themeMode == ThemeMode.light,
+                              onSelected: (bool selected) {
+                                if (selected) {
+                                  widget.onThemeChanged(ThemeMode.light);
+                                }
+                              },
+                            ),
+                            ChoiceChip(
+                              label: const Text('Dark'),
+                              selected: widget.themeMode == ThemeMode.dark,
+                              onSelected: (bool selected) {
+                                if (selected) {
+                                  widget.onThemeChanged(ThemeMode.dark);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
                         const Text('Native Language:'),
                         DropdownButton<String>(
                           value: _nativeLanguage,
@@ -667,6 +769,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                           shrinkWrap: true,
                           crossAxisCount: 2,
                           childAspectRatio: 4,
+                          physics: NeverScrollableScrollPhysics(),
                           children: genres.map((String genre) {
                             return CheckboxListTile(
                               title: Text(genre),
