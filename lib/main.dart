@@ -48,7 +48,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   InterstitialAd? _interstitialAd;
   bool _isInterstitialAdReady = false;
   String _currentSentence = '';
@@ -73,6 +73,9 @@ class _MyHomePageState extends State<MyHomePage> {
     'Advanced',
     'Expert'
   ];
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
 
   final List<Map<String, String>> _languages = [
     {'name': 'English (US) 🇺🇸', 'code': 'en-US'},
@@ -96,12 +99,37 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     _initializeTTS();
     _loadPreferences();
-    _generateNewStory();
     _loadInterstitialAd();
+
+    // Initialize the animation controller and animations
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(0, -1),
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+
+    _fadeAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+
+    // Generate the initial story
+    WidgetsBinding.instance.addPostFrameCallback((_) => _generateNewStory());
   }
 
   @override
   void dispose() {
+    _animationController.dispose();
     _interstitialAd?.dispose();
     super.dispose();
   }
@@ -183,16 +211,19 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
 
+    // Stop the current audio player
+    await _audioPlayer.stop();
+
+    // Start the animation and wait for it to finish
+    await _animationController.forward();
+
     // Initialize the Completer and update the state to indicate loading
     setState(() {
       _storyCompleter = Completer<void>();
     });
 
-    // Stop the current audio player
-    await _audioPlayer.stop();
-
     // Show interstitial ad randomly
-    if (Random().nextInt(2) == 0 && _isInterstitialAdReady) {
+    if (Random().nextInt(20) == 0 && _isInterstitialAdReady) {
       _showInterstitialAd();
       return; // Do not generate a story now, it will be handled in the ad callback
     }
@@ -341,6 +372,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
       // Complete the story generation
       _storyCompleter?.complete();
+
+      // Reset the animation controller after the story is generated
+      _animationController.reset();
 
       await _narrateCurrentSentence(_narrationSessionId);
     } catch (e) {
@@ -643,79 +677,84 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-      body: FutureBuilder<void>(
-        future: _storyCompleter?.future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else {
-            return GestureDetector(
-              onVerticalDragEnd: (details) {
-                if (details.primaryVelocity! < 0) {
-                  debugPrint('Swipe up detected');
-                  _generateNewStory();
-                }
-              },
-              child: Container(
-                color: Colors.transparent, // Ensure the container is tappable
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SelectableText(
-                              _currentSentence,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                  fontSize: 24, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 20),
-                            Text(
-                              _currentSentenceTranslation,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                  fontSize: 20, fontStyle: FontStyle.italic),
-                            ),
-                          ],
+      body: Stack(
+        children: [
+          GestureDetector(
+            onVerticalDragEnd: (details) {
+              if (details.primaryVelocity! < 0) {
+                debugPrint('Swipe up detected');
+                _generateNewStory();
+              }
+            },
+            child: Container(
+              color: Colors.transparent, // Ensure the container is tappable
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SelectableText(
+                                _currentSentence,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                _currentSentenceTranslation,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                    SafeArea(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back),
-                            onPressed: _previousSentence,
-                          ),
-                          IconButton(
-                            icon: Icon(
-                                _isPlaying ? Icons.pause : Icons.play_arrow),
-                            onPressed: _isPlaying ? _pauseAudio : _resumeAudio,
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.arrow_forward),
-                            onPressed: _nextSentence,
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.translate),
-                            onPressed: _toggleTranslations,
-                          ),
-                        ],
-                      ),
+                  ),
+                  SafeArea(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: _previousSentence,
+                        ),
+                        IconButton(
+                          icon:
+                              Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+                          onPressed: _isPlaying ? _pauseAudio : _resumeAudio,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_forward),
+                          onPressed: _nextSentence,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.translate),
+                          onPressed: _toggleTranslations,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            );
-          }
-        },
+            ),
+          ),
+          if (_storyCompleter != null && !_storyCompleter!.isCompleted)
+            Center(child: CircularProgressIndicator()),
+        ],
       ),
     );
   }
