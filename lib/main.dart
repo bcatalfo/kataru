@@ -222,26 +222,40 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _playNextStory() async {
-    if (_isStoryLoading) return;
+    if (_isStoryLoading) {
+      // If a story is already being loaded, do nothing.
+      return;
+    }
 
+    // Stop the current audio player
     await _audioPlayer.stop();
+
+    // Start the animation and wait for it to finish
     await _animationController.forward();
 
+    // Set the state to indicate loading
     setState(() {
       _isStoryLoading = true;
     });
 
+    // Show interstitial ad randomly
     if (Random().nextInt(20) == 0 && _isInterstitialAdReady) {
       _showInterstitialAd();
-      return;
+      return; // Do not generate a story now, it will be handled in the ad callback
     }
 
-    // Wait for the story to be displayed before preloading the next one
-    await _displayPreloadedStory();
-    await _preloadNextStory();
+    // Reset the narration session ID for the new story
+    _narrationSessionId = DateTime.now().millisecondsSinceEpoch.toString();
 
-    setState(() {
-      _isStoryLoading = false;
+    // Display the preloaded story without waiting for narration to complete
+    await _displayPreloadedStory();
+
+    // Preload the next story in parallel
+    _preloadNextStory().then((_) {
+      // Reset loading state after preloading
+      setState(() {
+        _isStoryLoading = false;
+      });
     });
   }
 
