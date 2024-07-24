@@ -62,7 +62,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   List<File> _audioFiles = [];
   bool _isPlaying = false;
   bool _showTranslations = false;
-  Completer<void>? _storyCompleter;
+  bool _isStoryLoading = false;
   String _narrationSessionId = '';
   String _difficultyLevel = 'Absolute Beginner';
   final List<String> _difficultyLevels = [
@@ -76,6 +76,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
+  Map<String, dynamic>? _preloadedStory;
+  List<File> _preloadedAudioFiles = [];
 
   final List<Map<String, String>> _languages = [
     {'name': 'English (US) 🇺🇸', 'code': 'en-US'},
@@ -98,8 +100,17 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _initializeTTS();
-    _loadPreferences();
-    _loadInterstitialAd();
+    _loadPreferences().then((_) {
+      _loadInterstitialAd();
+      // Preload the first story
+      _preloadNextStory().then((_) {
+        // Display the preloaded story and narrate it
+        _displayPreloadedStory().then((_) {
+          // Preload the next story in the background
+          _preloadNextStory();
+        });
+      });
+    });
 
     // Initialize the animation controller and animations
     _animationController = AnimationController(
@@ -122,9 +133,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       parent: _animationController,
       curve: Curves.easeOut,
     ));
-
-    // Generate the initial story
-    WidgetsBinding.instance.addPostFrameCallback((_) => _generateNewStory());
   }
 
   @override
@@ -151,6 +159,15 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     prefs.setString('difficultyLevel', _difficultyLevel);
   }
 
+  void _showInterstitialAd() {
+    if (_interstitialAd != null) {
+      _interstitialAd!.show();
+    } else {
+      // Load a new ad if the current ad is null
+      _loadInterstitialAd();
+    }
+  }
+
   void _loadInterstitialAd() {
     InterstitialAd.load(
       adUnitId: 'ca-app-pub-3940256099942544/4411468910',
@@ -167,8 +184,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               _pauseAudio();
             },
             onAdDismissedFullScreenContent: (InterstitialAd ad) {
-              // Generate the new story after the ad is dismissed
-              _generateAndDisplayNewStory();
+              // Resume story playing after the ad is dismissed
+              _displayPreloadedStory().then((_) {
+                _preloadNextStory().then((_) {
+                  setState(() {
+                    _isStoryLoading = false;
+                  });
+                  // Reset the animation controller after the story is generated
+                  _animationController.reset();
+                });
+              });
               ad.dispose();
               _loadInterstitialAd(); // Load a new ad
             },
@@ -187,15 +212,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     );
   }
 
-  void _showInterstitialAd() {
-    if (_interstitialAd != null) {
-      _interstitialAd!.show();
-    } else {
-      // Load a new ad if the current ad is null
-      _loadInterstitialAd();
-    }
-  }
-
   Future<void> _initializeTTS() async {
     final jsonCredentials = await DefaultAssetBundle.of(context)
         .loadString('assets/service_account_key.json');
@@ -205,182 +221,195 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     _textToSpeechApi = TexttospeechApi(authClient);
   }
 
-  Future<void> _generateNewStory() async {
-    if (_storyCompleter != null && !_storyCompleter!.isCompleted) {
-      // If a story generation is already in progress, don't start a new one
+  Future<void> _playNextStory() async {
+    if (_isStoryLoading) return;
+
+    await _audioPlayer.stop();
+    await _animationController.forward();
+
+    setState(() {
+      _isStoryLoading = true;
+    });
+
+    if (Random().nextInt(20) == 0 && _isInterstitialAdReady) {
+      _showInterstitialAd();
       return;
     }
 
-    // Stop the current audio player
-    await _audioPlayer.stop();
+    // Wait for the story to be displayed before preloading the next one
+    await _displayPreloadedStory();
+    await _preloadNextStory();
 
-    // Start the animation and wait for it to finish
-    await _animationController.forward();
-
-    // Initialize the Completer and update the state to indicate loading
     setState(() {
-      _storyCompleter = Completer<void>();
+      _isStoryLoading = false;
     });
-
-    // Show interstitial ad randomly
-    if (Random().nextInt(20) == 0 && _isInterstitialAdReady) {
-      _showInterstitialAd();
-      return; // Do not generate a story now, it will be handled in the ad callback
-    }
-
-    await _generateAndDisplayNewStory();
   }
 
-  Future<void> _generateAndDisplayNewStory() async {
-    try {
-      // Change the narration session ID to stop any ongoing narration
+  Future<void> _displayPreloadedStory() async {
+    if (_preloadedStory == null) {
       setState(() {
-        _narrationSessionId = DateTime.now().millisecondsSinceEpoch.toString();
-        _isPlaying = false;
-        _audioFiles.clear();
-        _sentences.clear();
-        _translations.clear();
+        _isStoryLoading = false;
       });
-
-      // Generate the new story
-      final model =
-          FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-flash');
-      final List<String> genres = [
-        "adventure",
-        "romance",
-        "mystery",
-        "historical fiction",
-        "science fiction",
-        "fantasy",
-        "horror",
-        "thriller",
-        "comedy",
-        "drama",
-        "slice of life",
-        "mythology",
-        "fairy tale",
-        "travel",
-        "food and cooking",
-        "sports",
-        "music",
-        "art",
-        "technology",
-        "environmental",
-        "cultural exploration",
-        "family and relationships",
-        "friendship",
-        "hero's journey",
-        "coming of age",
-        "holiday and celebrations",
-        "workplace stories",
-        "school and education",
-        "health and wellness",
-        "animals and nature",
-        "urban life",
-        "rural life",
-        "supernatural",
-        "crime and detective",
-        "war and conflict",
-        "exploration and discovery",
-        "space exploration",
-        "time travel",
-        "magical realism",
-        "folklore",
-        "legends",
-        "dystopian",
-        "utopian",
-        "post-apocalyptic",
-        "cyberpunk",
-        "steampunk",
-        "noir",
-        "political intrigue",
-        "psychological",
-        "self-discovery",
-        "moral dilemmas",
-        "social issues",
-        "philosophical",
-        "spiritual journeys"
-      ];
-
-      final targetLanguageName = _languages
-          .firstWhere((lang) => lang['code'] == _targetLanguage)['name'];
-      final nativeLanguageName = _languages
-          .firstWhere((lang) => lang['code'] == _nativeLanguage)['name'];
-      final randomGenre = (genres..shuffle()).first;
-
-      String difficultyDescription;
-
-      switch (_difficultyLevel) {
-        case 'Absolute Beginner':
-          difficultyDescription =
-              'Use very simple vocabulary and short sentences.';
-          break;
-        case 'Beginner':
-          difficultyDescription = 'Use simple vocabulary and short sentences.';
-          break;
-        case 'Intermediate':
-          difficultyDescription =
-              'Use moderate vocabulary and sentence length.';
-          break;
-        case 'Advanced':
-          difficultyDescription =
-              'Use complex vocabulary and longer sentences.';
-          break;
-        case 'Expert':
-          difficultyDescription =
-              'Use very complex vocabulary and intricate sentences.';
-          break;
-        default:
-          difficultyDescription = 'Use simple vocabulary and short sentences.';
-      }
-
-      final promptText =
-          'Create a unique and interesting $randomGenre story in $targetLanguageName at a $_difficultyLevel difficulty level. This story is for learners of the language. $difficultyDescription Ensure that the story is grammatically correct and do not include pronunciations or Roman alphabet transcriptions in parentheses. Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
-
-      final prompt = [Content.text(promptText)];
-
-      debugPrint('prompt: $promptText');
-      final response = await model.generateContent(prompt);
-
-      debugPrint('Generated Story: ${response.text}');
-
-      // Process and clean up the response text
-      final parts = response.text?.split('|SEPARATOR|') ?? [];
-      final storyPart =
-          parts.isNotEmpty ? parts[0].replaceAll(r'\n', '\n').trim() : '';
-      final translationPart =
-          parts.length > 1 ? parts[1].replaceAll(r'\n', '\n').trim() : '';
-
-      debugPrint('Story Part: $storyPart');
-      debugPrint('Translation Part: $translationPart');
-
-      setState(() {
-        _sentences = _splitSentences(storyPart);
-        _translations = _splitSentences(translationPart);
-        _sentenceIndex = 0;
-        _currentSentence = _sentences.isNotEmpty ? _sentences[0] : '';
-        _currentSentenceTranslation =
-            _showTranslations && _translations.isNotEmpty
-                ? _translations[0]
-                : '';
-      });
-
-      debugPrint('Sentences: $_sentences');
-      debugPrint('Translations: $_translations');
-
-      await _generateAudioFiles();
-
-      // Complete the story generation
-      _storyCompleter?.complete();
-
-      // Reset the animation controller after the story is generated
-      _animationController.reset();
-
-      await _narrateCurrentSentence(_narrationSessionId);
-    } catch (e) {
-      // If an error occurs, complete with error
-      _storyCompleter?.completeError(e);
+      return;
     }
+
+    setState(() {
+      _sentences = _splitSentences(_preloadedStory!['storyPart']);
+      _translations = _splitSentences(_preloadedStory!['translationPart']);
+      _sentenceIndex = 0;
+      _currentSentence = _sentences.isNotEmpty ? _sentences[0] : '';
+      _currentSentenceTranslation =
+          _showTranslations && _translations.isNotEmpty ? _translations[0] : '';
+      _audioFiles = List<File>.from(_preloadedAudioFiles);
+      _preloadedStory = null; // Clear preloaded story after using
+    });
+
+    debugPrint('Sentences: $_sentences');
+    debugPrint('Translations: $_translations');
+
+    // Reset the animation controller after the story is displayed
+    _animationController.reset();
+
+    // Narrate the current sentence without blocking
+    _narrateCurrentSentence(_narrationSessionId);
+  }
+
+  Future<void> _preloadNextStory() async {
+    final promptText = _buildPromptText();
+
+    final model =
+        FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-flash');
+
+    final prompt = [Content.text(promptText)];
+
+    debugPrint('prompt: $promptText');
+    final response = await model.generateContent(prompt);
+
+    debugPrint('Generated Story: ${response.text}');
+
+    // Process and clean up the response text
+    final parts = response.text?.split('|SEPARATOR|') ?? [];
+    final storyPart =
+        parts.isNotEmpty ? parts[0].replaceAll(r'\n', '\n').trim() : '';
+    final translationPart =
+        parts.length > 1 ? parts[1].replaceAll(r'\n', '\n').trim() : '';
+
+    _preloadedStory = {
+      'storyPart': storyPart,
+      'translationPart': translationPart,
+    };
+
+    // Preload audio files with a unique identifier
+    final uniqueId = DateTime.now().millisecondsSinceEpoch.toString();
+    await _preloadAudioFiles(storyPart, uniqueId);
+  }
+
+  String _buildPromptText() {
+    final List<String> genres = [
+      "adventure",
+      "romance",
+      "mystery",
+      "historical fiction",
+      "science fiction",
+      "fantasy",
+      "horror",
+      "thriller",
+      "comedy",
+      "drama",
+      "slice of life",
+      "mythology",
+      "fairy tale",
+      "travel",
+      "food and cooking",
+      "sports",
+      "music",
+      "art",
+      "technology",
+      "environmental",
+      "cultural exploration",
+      "family and relationships",
+      "friendship",
+      "hero's journey",
+      "coming of age",
+      "holiday and celebrations",
+      "workplace stories",
+      "school and education",
+      "health and wellness",
+      "animals and nature",
+      "urban life",
+      "rural life",
+      "supernatural",
+      "crime and detective",
+      "war and conflict",
+      "exploration and discovery",
+      "space exploration",
+      "time travel",
+      "magical realism",
+      "folklore",
+      "legends",
+      "dystopian",
+      "utopian",
+      "post-apocalyptic",
+      "cyberpunk",
+      "steampunk",
+      "noir",
+      "political intrigue",
+      "psychological",
+      "self-discovery",
+      "moral dilemmas",
+      "social issues",
+      "philosophical",
+      "spiritual journeys"
+    ];
+
+    final targetLanguageName = _languages
+        .firstWhere((lang) => lang['code'] == _targetLanguage)['name'];
+    final nativeLanguageName = _languages
+        .firstWhere((lang) => lang['code'] == _nativeLanguage)['name'];
+    final randomGenre = (genres..shuffle()).first;
+
+    String difficultyDescription;
+
+    switch (_difficultyLevel) {
+      case 'Absolute Beginner':
+        difficultyDescription =
+            'Use very simple vocabulary and short sentences.';
+        break;
+      case 'Beginner':
+        difficultyDescription = 'Use simple vocabulary and short sentences.';
+        break;
+      case 'Intermediate':
+        difficultyDescription = 'Use moderate vocabulary and sentence length.';
+        break;
+      case 'Advanced':
+        difficultyDescription = 'Use complex vocabulary and longer sentences.';
+        break;
+      case 'Expert':
+        difficultyDescription =
+            'Use very complex vocabulary and intricate sentences.';
+        break;
+      default:
+        difficultyDescription = 'Use simple vocabulary and short sentences.';
+    }
+
+    return 'Create a unique and interesting $randomGenre story in $targetLanguageName at a $_difficultyLevel difficulty level. This story is for learners of the language. $difficultyDescription Ensure that the story is grammatically correct and do not include pronunciations or Roman alphabet transcriptions in parentheses. Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
+  }
+
+  Future<void> _preloadAudioFiles(String storyPart, String uniqueId) async {
+    _preloadedAudioFiles.clear();
+    final sentences = _splitSentences(storyPart);
+    final tempDir = await getTemporaryDirectory();
+
+    for (int i = 0; i < sentences.length; i++) {
+      final sentence = sentences[i];
+      final file = await _synthesizeAudio(sentence, _targetLanguage,
+          _getVoiceForLanguage(_targetLanguage), tempDir, uniqueId, i);
+      if (file != null) {
+        _preloadedAudioFiles.add(file);
+      }
+    }
+
+    debugPrint('Preloaded audio files: $_preloadedAudioFiles');
   }
 
   List<String> _splitSentences(String text) {
@@ -389,20 +418,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         .map((s) => s.trim())
         .where((s) => s.isNotEmpty && s != '\\')
         .toList();
-  }
-
-  Future<void> _generateAudioFiles() async {
-    _audioFiles.clear();
-    final tempDir = await getTemporaryDirectory();
-
-    for (int i = 0; i < _sentences.length; i++) {
-      final sentence = _sentences[i];
-
-      await _synthesizeAudio(sentence, _targetLanguage,
-          _getVoiceForLanguage(_targetLanguage), tempDir, i);
-    }
-
-    debugPrint('Generated audio files: $_audioFiles');
   }
 
   String _getVoiceForLanguage(String languageCode) {
@@ -436,9 +451,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _synthesizeAudio(String text, String languageCode,
-      String voiceName, Directory tempDir, int index) async {
-    if (text.isEmpty) return;
+  Future<File?> _synthesizeAudio(String text, String languageCode,
+      String voiceName, Directory tempDir, String uniqueId, int index) async {
+    if (text.isEmpty) return null;
 
     final input = SynthesisInput(text: text);
     final voice =
@@ -450,10 +465,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     if (response.audioContent != null) {
       final bytes = Uint8List.fromList(response.audioContentAsBytes);
-      final file = File('${tempDir.path}/$index.mp3');
+      final file = File('${tempDir.path}/$uniqueId-$index.mp3');
       await file.writeAsBytes(bytes);
-      _audioFiles.add(file);
+      return file;
     }
+
+    return null;
   }
 
   Future<void> _narrateCurrentSentence(String sessionId) async {
@@ -621,7 +638,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                               _targetLanguage = newValue!;
                               _savePreferences();
                             });
-                            _generateNewStory();
                           },
                           isExpanded: true,
                           items: _languages.map<DropdownMenuItem<String>>(
@@ -641,7 +657,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                               _difficultyLevel = newValue!;
                               _savePreferences();
                             });
-                            _generateNewStory();
                           },
                           isExpanded: true,
                           items: _difficultyLevels
@@ -677,84 +692,88 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          GestureDetector(
-            onVerticalDragEnd: (details) {
-              if (details.primaryVelocity! < 0) {
-                debugPrint('Swipe up detected');
-                _generateNewStory();
-              }
-            },
-            child: Container(
-              color: Colors.transparent, // Ensure the container is tappable
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: SlideTransition(
-                        position: _slideAnimation,
-                        child: FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SelectableText(
-                                _currentSentence,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              Text(
-                                _currentSentenceTranslation,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ],
+      body: GestureDetector(
+        onVerticalDragEnd: (details) {
+          if (details.primaryVelocity! < 0) {
+            debugPrint('Swipe up detected');
+            _playNextStory();
+          }
+        },
+        child: Container(
+          color: Colors.transparent, // Ensure the container is tappable
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SelectableText(
+                            _currentSentence,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 20),
+                          Text(
+                            _currentSentenceTranslation,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                          if (_isStoryLoading) ...[
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const CircularProgressIndicator(),
+                                const SizedBox(width: 10),
+                                const Text("Loading next story..."),
+                              ],
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ),
-                  SafeArea(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back),
-                          onPressed: _previousSentence,
-                        ),
-                        IconButton(
-                          icon:
-                              Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-                          onPressed: _isPlaying ? _pauseAudio : _resumeAudio,
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.arrow_forward),
-                          onPressed: _nextSentence,
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.translate),
-                          onPressed: _toggleTranslations,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+              SafeArea(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: _previousSentence,
+                    ),
+                    IconButton(
+                      icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+                      onPressed: _isPlaying ? _pauseAudio : _resumeAudio,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_forward),
+                      onPressed: _nextSentence,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.translate),
+                      onPressed: _toggleTranslations,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          if (_storyCompleter != null && !_storyCompleter!.isCompleted)
-            Center(child: CircularProgressIndicator()),
-        ],
+        ),
       ),
     );
   }
