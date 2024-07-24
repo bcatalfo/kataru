@@ -96,6 +96,27 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   ];
   final _scopes = [TexttospeechApi.cloudPlatformScope];
   late final TexttospeechApi _textToSpeechApi;
+  final List<String> genres = [
+    "Action",
+    "Adventure",
+    "Classic",
+    "Comedies",
+    "Documentaries",
+    "Dramas",
+    "Horror",
+    "Romantic",
+    "Sci-fi",
+    "Fantasy",
+    "Sports",
+    "Thrillers",
+    "Historical",
+    "Mystery",
+    "Supernatural",
+    "Crime",
+    "Slice of Life"
+  ];
+
+  List<String> _selectedGenres = [];
 
   @override
   void initState() {
@@ -146,6 +167,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  Future<void> _savePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('nativeLanguage', _nativeLanguage);
+    prefs.setString('targetLanguage', _targetLanguage);
+    prefs.setString('difficultyLevel', _difficultyLevel);
+    prefs.setStringList('selectedGenres', _selectedGenres);
+  }
+
   Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -153,14 +182,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       _targetLanguage = prefs.getString('targetLanguage') ?? 'ja-JP';
       _difficultyLevel =
           prefs.getString('difficultyLevel') ?? 'Absolute Beginner';
-    });
-  }
+      _selectedGenres =
+          prefs.getStringList('selectedGenres') ?? genres.toList();
 
-  Future<void> _savePreferences() async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setString('nativeLanguage', _nativeLanguage);
-    prefs.setString('targetLanguage', _targetLanguage);
-    prefs.setString('difficultyLevel', _difficultyLevel);
+      if (_selectedGenres.isEmpty) {
+        _selectedGenres = genres.toList();
+      }
+    });
   }
 
   void _showInterstitialAd() {
@@ -323,68 +351,17 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   String _buildPromptText() {
-    final List<String> genres = [
-      "adventure",
-      "romance",
-      "mystery",
-      "historical fiction",
-      "science fiction",
-      "fantasy",
-      "horror",
-      "thriller",
-      "comedy",
-      "drama",
-      "slice of life",
-      "mythology",
-      "fairy tale",
-      "travel",
-      "food and cooking",
-      "sports",
-      "music",
-      "art",
-      "technology",
-      "environmental",
-      "cultural exploration",
-      "family and relationships",
-      "friendship",
-      "hero's journey",
-      "coming of age",
-      "holiday and celebrations",
-      "workplace stories",
-      "school and education",
-      "health and wellness",
-      "animals and nature",
-      "urban life",
-      "rural life",
-      "supernatural",
-      "crime and detective",
-      "war and conflict",
-      "exploration and discovery",
-      "space exploration",
-      "time travel",
-      "magical realism",
-      "folklore",
-      "legends",
-      "dystopian",
-      "utopian",
-      "post-apocalyptic",
-      "cyberpunk",
-      "steampunk",
-      "noir",
-      "political intrigue",
-      "psychological",
-      "self-discovery",
-      "moral dilemmas",
-      "social issues",
-      "philosophical",
-      "spiritual journeys"
-    ];
+    if (_selectedGenres.isEmpty) {
+      _selectedGenres = genres.toList();
+    }
 
     final targetLanguageName = _languages
         .firstWhere((lang) => lang['code'] == _targetLanguage)['name'];
     final nativeLanguageName = _languages
         .firstWhere((lang) => lang['code'] == _nativeLanguage)['name'];
-    final randomGenre = (genres..shuffle()).first;
+
+    final shuffledGenres = _selectedGenres.toList()..shuffle();
+    final randomGenre = shuffledGenres.first;
 
     String difficultyDescription;
 
@@ -609,8 +586,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return FractionallySizedBox(
-              heightFactor:
-                  0.9, // Adjust this value to cover more or less of the screen
+              heightFactor: 0.9,
               child: Scaffold(
                 appBar: AppBar(
                   title: const Text('Settings'),
@@ -682,6 +658,35 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                             return DropdownMenuItem<String>(
                               value: level,
                               child: Text(level),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('Genres:'),
+                        GridView.count(
+                          shrinkWrap: true,
+                          crossAxisCount: 2,
+                          childAspectRatio: 4,
+                          children: genres.map((String genre) {
+                            return CheckboxListTile(
+                              title: Text(genre),
+                              value: _selectedGenres.contains(genre),
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  if (value == true) {
+                                    _selectedGenres.add(genre);
+                                  } else if (_selectedGenres.length > 1) {
+                                    _selectedGenres.remove(genre);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              'At least one genre must be selected.')),
+                                    );
+                                  }
+                                  _savePreferences();
+                                });
+                              },
                             );
                           }).toList(),
                         ),
