@@ -716,9 +716,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         child: Container(
           color: Colors.transparent, // Ensure the container is tappable
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Spacer(flex: 4), // Equal flex value for the top spacer
               Expanded(
+                flex: 6, // Increased flex value for the main content
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: SlideTransition(
@@ -745,8 +746,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                               fontStyle: FontStyle.italic,
                             ),
                           ),
+                          Spacer(flex: 1), // Spacer for balance
                           if (_isStoryLoading) ...[
-                            const SizedBox(height: 20),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -755,7 +756,19 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                                 const Text("Loading next story..."),
                               ],
                             ),
+                          ] else ...[
+                            const Text(
+                              "Swipe up for a new story",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
                           ],
+                          Spacer(
+                              flex:
+                                  1), // Equal flex value for the bottom spacer
                         ],
                       ),
                     ),
