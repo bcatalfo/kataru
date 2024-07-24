@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -61,6 +62,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<File> _audioFiles = [];
   bool _isPlaying = false;
   bool _showTranslations = false;
+  Completer<void>? _storyCompleter;
   String _narrationSessionId = '';
   String _difficultyLevel = 'Absolute Beginner';
   final List<String> _difficultyLevels = [
@@ -176,6 +178,16 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _generateNewStory() async {
+    if (_storyCompleter != null && !_storyCompleter!.isCompleted) {
+      // If a story generation is already in progress, don't start a new one
+      return;
+    }
+
+    // Initialize the Completer and update the state to indicate loading
+    setState(() {
+      _storyCompleter = Completer<void>();
+    });
+
     // Stop the current audio player
     await _audioPlayer.stop();
 
@@ -184,143 +196,157 @@ class _MyHomePageState extends State<MyHomePage> {
       _showInterstitialAd();
       return; // Do not generate a story now, it will be handled in the ad callback
     }
-    _generateAndDisplayNewStory();
+
+    await _generateAndDisplayNewStory();
   }
 
   Future<void> _generateAndDisplayNewStory() async {
-    // Change the narration session ID to stop any ongoing narration
-    setState(() {
-      _narrationSessionId = DateTime.now().millisecondsSinceEpoch.toString();
-      _isPlaying = false;
-      _audioFiles.clear();
-      _sentences.clear();
-      _translations.clear();
-    });
+    try {
+      // Change the narration session ID to stop any ongoing narration
+      setState(() {
+        _narrationSessionId = DateTime.now().millisecondsSinceEpoch.toString();
+        _isPlaying = false;
+        _audioFiles.clear();
+        _sentences.clear();
+        _translations.clear();
+      });
 
-    // Generate the new story
-    final model =
-        FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-flash');
-    final List<String> genres = [
-      "adventure",
-      "romance",
-      "mystery",
-      "historical fiction",
-      "science fiction",
-      "fantasy",
-      "horror",
-      "thriller",
-      "comedy",
-      "drama",
-      "slice of life",
-      "mythology",
-      "fairy tale",
-      "travel",
-      "food and cooking",
-      "sports",
-      "music",
-      "art",
-      "technology",
-      "environmental",
-      "cultural exploration",
-      "family and relationships",
-      "friendship",
-      "hero's journey",
-      "coming of age",
-      "holiday and celebrations",
-      "workplace stories",
-      "school and education",
-      "health and wellness",
-      "animals and nature",
-      "urban life",
-      "rural life",
-      "supernatural",
-      "crime and detective",
-      "war and conflict",
-      "exploration and discovery",
-      "space exploration",
-      "time travel",
-      "magical realism",
-      "folklore",
-      "legends",
-      "dystopian",
-      "utopian",
-      "post-apocalyptic",
-      "cyberpunk",
-      "steampunk",
-      "noir",
-      "political intrigue",
-      "psychological",
-      "self-discovery",
-      "moral dilemmas",
-      "social issues",
-      "philosophical",
-      "spiritual journeys"
-    ];
+      // Generate the new story
+      final model =
+          FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-flash');
+      final List<String> genres = [
+        "adventure",
+        "romance",
+        "mystery",
+        "historical fiction",
+        "science fiction",
+        "fantasy",
+        "horror",
+        "thriller",
+        "comedy",
+        "drama",
+        "slice of life",
+        "mythology",
+        "fairy tale",
+        "travel",
+        "food and cooking",
+        "sports",
+        "music",
+        "art",
+        "technology",
+        "environmental",
+        "cultural exploration",
+        "family and relationships",
+        "friendship",
+        "hero's journey",
+        "coming of age",
+        "holiday and celebrations",
+        "workplace stories",
+        "school and education",
+        "health and wellness",
+        "animals and nature",
+        "urban life",
+        "rural life",
+        "supernatural",
+        "crime and detective",
+        "war and conflict",
+        "exploration and discovery",
+        "space exploration",
+        "time travel",
+        "magical realism",
+        "folklore",
+        "legends",
+        "dystopian",
+        "utopian",
+        "post-apocalyptic",
+        "cyberpunk",
+        "steampunk",
+        "noir",
+        "political intrigue",
+        "psychological",
+        "self-discovery",
+        "moral dilemmas",
+        "social issues",
+        "philosophical",
+        "spiritual journeys"
+      ];
 
-    final targetLanguageName = _languages
-        .firstWhere((lang) => lang['code'] == _targetLanguage)['name'];
-    final nativeLanguageName = _languages
-        .firstWhere((lang) => lang['code'] == _nativeLanguage)['name'];
-    final randomGenre = (genres..shuffle()).first;
+      final targetLanguageName = _languages
+          .firstWhere((lang) => lang['code'] == _targetLanguage)['name'];
+      final nativeLanguageName = _languages
+          .firstWhere((lang) => lang['code'] == _nativeLanguage)['name'];
+      final randomGenre = (genres..shuffle()).first;
 
-    String difficultyDescription;
+      String difficultyDescription;
 
-    switch (_difficultyLevel) {
-      case 'Absolute Beginner':
-        difficultyDescription =
-            'Use very simple vocabulary and short sentences.';
-        break;
-      case 'Beginner':
-        difficultyDescription = 'Use simple vocabulary and short sentences.';
-        break;
-      case 'Intermediate':
-        difficultyDescription = 'Use moderate vocabulary and sentence length.';
-        break;
-      case 'Advanced':
-        difficultyDescription = 'Use complex vocabulary and longer sentences.';
-        break;
-      case 'Expert':
-        difficultyDescription =
-            'Use very complex vocabulary and intricate sentences.';
-        break;
-      default:
-        difficultyDescription = 'Use simple vocabulary and short sentences.';
+      switch (_difficultyLevel) {
+        case 'Absolute Beginner':
+          difficultyDescription =
+              'Use very simple vocabulary and short sentences.';
+          break;
+        case 'Beginner':
+          difficultyDescription = 'Use simple vocabulary and short sentences.';
+          break;
+        case 'Intermediate':
+          difficultyDescription =
+              'Use moderate vocabulary and sentence length.';
+          break;
+        case 'Advanced':
+          difficultyDescription =
+              'Use complex vocabulary and longer sentences.';
+          break;
+        case 'Expert':
+          difficultyDescription =
+              'Use very complex vocabulary and intricate sentences.';
+          break;
+        default:
+          difficultyDescription = 'Use simple vocabulary and short sentences.';
+      }
+
+      final promptText =
+          'Create a unique and interesting $randomGenre story in $targetLanguageName at a $_difficultyLevel difficulty level. This story is for learners of the language. $difficultyDescription Ensure that the story is grammatically correct and do not include pronunciations or Roman alphabet transcriptions in parentheses. Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
+
+      final prompt = [Content.text(promptText)];
+
+      debugPrint('prompt: $promptText');
+      final response = await model.generateContent(prompt);
+
+      debugPrint('Generated Story: ${response.text}');
+
+      // Process and clean up the response text
+      final parts = response.text?.split('|SEPARATOR|') ?? [];
+      final storyPart =
+          parts.isNotEmpty ? parts[0].replaceAll(r'\n', '\n').trim() : '';
+      final translationPart =
+          parts.length > 1 ? parts[1].replaceAll(r'\n', '\n').trim() : '';
+
+      debugPrint('Story Part: $storyPart');
+      debugPrint('Translation Part: $translationPart');
+
+      setState(() {
+        _sentences = _splitSentences(storyPart);
+        _translations = _splitSentences(translationPart);
+        _sentenceIndex = 0;
+        _currentSentence = _sentences.isNotEmpty ? _sentences[0] : '';
+        _currentSentenceTranslation =
+            _showTranslations && _translations.isNotEmpty
+                ? _translations[0]
+                : '';
+      });
+
+      debugPrint('Sentences: $_sentences');
+      debugPrint('Translations: $_translations');
+
+      await _generateAudioFiles();
+
+      // Complete the story generation
+      _storyCompleter?.complete();
+
+      await _narrateCurrentSentence(_narrationSessionId);
+    } catch (e) {
+      // If an error occurs, complete with error
+      _storyCompleter?.completeError(e);
     }
-
-    final promptText =
-        'Create a unique and interesting $randomGenre story in $targetLanguageName at a $_difficultyLevel difficulty level. This story is for learners of the language. $difficultyDescription Ensure that the story is grammatically correct and do not include pronunciations or Roman alphabet transcriptions in parentheses. Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
-
-    final prompt = [Content.text(promptText)];
-
-    debugPrint('prompt: $promptText');
-    final response = await model.generateContent(prompt);
-
-    debugPrint('Generated Story: ${response.text}');
-
-    // Process and clean up the response text
-    final parts = response.text?.split('|SEPARATOR|') ?? [];
-    final storyPart =
-        parts.isNotEmpty ? parts[0].replaceAll(r'\n', '\n').trim() : '';
-    final translationPart =
-        parts.length > 1 ? parts[1].replaceAll(r'\n', '\n').trim() : '';
-
-    debugPrint('Story Part: $storyPart');
-    debugPrint('Translation Part: $translationPart');
-
-    setState(() {
-      _sentences = _splitSentences(storyPart);
-      _translations = _splitSentences(translationPart);
-      _sentenceIndex = 0;
-      _currentSentence = _sentences.isNotEmpty ? _sentences[0] : '';
-      _currentSentenceTranslation =
-          _showTranslations && _translations.isNotEmpty ? _translations[0] : '';
-    });
-
-    debugPrint('Sentences: $_sentences');
-    debugPrint('Translations: $_translations');
-
-    await _generateAudioFiles();
-    await _narrateCurrentSentence(_narrationSessionId);
   }
 
   List<String> _splitSentences(String text) {
@@ -617,63 +643,79 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SelectableText(
-                        _currentSentence,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontSize: 24, fontWeight: FontWeight.bold),
+      body: FutureBuilder<void>(
+        future: _storyCompleter?.future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else {
+            return GestureDetector(
+              onVerticalDragEnd: (details) {
+                if (details.primaryVelocity! < 0) {
+                  debugPrint('Swipe up detected');
+                  _generateNewStory();
+                }
+              },
+              child: Container(
+                color: Colors.transparent, // Ensure the container is tappable
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SelectableText(
+                              _currentSentence,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              _currentSentenceTranslation,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  fontSize: 20, fontStyle: FontStyle.italic),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 20),
-                      Text(
-                        _currentSentenceTranslation,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontSize: 20, fontStyle: FontStyle.italic),
+                    ),
+                    SafeArea(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back),
+                            onPressed: _previousSentence,
+                          ),
+                          IconButton(
+                            icon: Icon(
+                                _isPlaying ? Icons.pause : Icons.play_arrow),
+                            onPressed: _isPlaying ? _pauseAudio : _resumeAudio,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.arrow_forward),
+                            onPressed: _nextSentence,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.translate),
+                            onPressed: _toggleTranslations,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: _previousSentence,
-                  ),
-                  IconButton(
-                    icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-                    onPressed: _isPlaying ? _pauseAudio : _resumeAudio,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_forward),
-                    onPressed: _nextSentence,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.translate),
-                    onPressed: _toggleTranslations,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _generateNewStory,
-                child: const Text('Generate New Story'),
-              ),
-            ],
-          ),
-        ),
+            );
+          }
+        },
       ),
     );
   }
