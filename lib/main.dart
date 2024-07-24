@@ -49,6 +49,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
+  bool _isInitialLoad = true;
   InterstitialAd? _interstitialAd;
   bool _isInterstitialAdReady = false;
   String _currentSentence = '';
@@ -106,6 +107,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       _preloadNextStory().then((_) {
         // Display the preloaded story and narrate it
         _displayPreloadedStory().then((_) {
+          setState(() {
+            _isInitialLoad = false; // Initial load complete
+          });
           // Preload the next story in the background
           _preloadNextStory();
         });
@@ -729,42 +733,53 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          SelectableText(
-                            _currentSentence,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            _currentSentenceTranslation,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                          Spacer(flex: 1), // Spacer for balance
-                          if (_isStoryLoading) ...[
+                          if (_isInitialLoad) ...[
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 const CircularProgressIndicator(),
                                 const SizedBox(width: 10),
-                                const Text("Loading next story..."),
+                                const Text("Loading story..."),
                               ],
                             ),
                           ] else ...[
-                            const Text(
-                              "Swipe up for a new story",
+                            SelectableText(
+                              _currentSentence,
                               textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 16,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              _currentSentenceTranslation,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 20,
                                 fontStyle: FontStyle.italic,
                               ),
                             ),
+                            Spacer(flex: 1), // Spacer for balance
+                            if (_isStoryLoading) ...[
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const CircularProgressIndicator(),
+                                  const SizedBox(width: 10),
+                                  const Text("Loading next story..."),
+                                ],
+                              ),
+                            ] else ...[
+                              const Text(
+                                "Swipe up for a new story",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
                           ],
                           Spacer(
                               flex:
