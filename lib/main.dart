@@ -392,7 +392,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     final promptText = _buildPromptText();
 
     final model =
-        FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-flash');
+        FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-pro-001');
 
     final prompt = [Content.text(promptText)];
 
@@ -408,14 +408,19 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     final translationPart =
         parts.length > 1 ? parts[1].replaceAll(r'\n', '\n').trim() : '';
 
+    // Remove "##" from the beginning of the story and translation using regex
+    final cleanedStoryPart = storyPart.replaceAll(RegExp(r'^##\s*'), '');
+    final cleanedTranslationPart =
+        translationPart.replaceAll(RegExp(r'^##\s*'), '');
+
     _preloadedStory = {
-      'storyPart': storyPart,
-      'translationPart': translationPart,
+      'storyPart': cleanedStoryPart,
+      'translationPart': cleanedTranslationPart,
     };
 
     // Preload audio files with a unique identifier
     final uniqueId = DateTime.now().millisecondsSinceEpoch.toString();
-    await _preloadAudioFiles(storyPart, uniqueId);
+    await _preloadAudioFiles(cleanedStoryPart, uniqueId);
   }
 
   String _buildPromptText() {
@@ -423,10 +428,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       _selectedGenres = genres.toList();
     }
 
-    final targetLanguageName = _languages
-        .firstWhere((lang) => lang['code'] == _targetLanguage)['name'];
-    final nativeLanguageName = _languages
-        .firstWhere((lang) => lang['code'] == _nativeLanguage)['name'];
+    final targetLanguage = _languages
+        .firstWhere((lang) => lang['code'] == _targetLanguage)['name']!;
+    final nativeLanguage = _languages
+        .firstWhere((lang) => lang['code'] == _nativeLanguage)['name']!;
 
     final shuffledGenres = _selectedGenres.toList()..shuffle();
     final randomGenre = shuffledGenres.first;
@@ -436,26 +441,43 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     switch (_difficultyLevel) {
       case 'Absolute Beginner':
         difficultyDescription =
-            'Use very simple vocabulary and short sentences.';
+            'Use extremely simple vocabulary and extremely short sentences and extremely simple grammar.';
         break;
       case 'Beginner':
-        difficultyDescription = 'Use simple vocabulary and short sentences.';
+        difficultyDescription =
+            'Use very simple vocabulary and very short sentences and very simple grammar.';
         break;
       case 'Intermediate':
-        difficultyDescription = 'Use moderate vocabulary and sentence length.';
+        difficultyDescription =
+            'Use simple vocabulary and short sentences and simple grammar.';
         break;
       case 'Advanced':
-        difficultyDescription = 'Use complex vocabulary and longer sentences.';
+        difficultyDescription =
+            'Use somewhat simple vocabulary and somewhat short sentences and somewhat simple grammar.';
         break;
       case 'Expert':
         difficultyDescription =
-            'Use very complex vocabulary and intricate sentences.';
+            'Use typical vocabulary and typical sentence length and typical grammar.';
         break;
       default:
-        difficultyDescription = 'Use simple vocabulary and short sentences.';
+        difficultyDescription =
+            'Use extremely simple vocabulary and extremely short sentences and extremely simple grammar.';
     }
 
-    return 'Create a unique and interesting $randomGenre story in $targetLanguageName at a $_difficultyLevel difficulty level. This story is for learners of the language. $difficultyDescription Ensure that the story is grammatically correct and do not include pronunciations or Roman alphabet transcriptions in parentheses. Each sentence should be separated by a newline character "\\n". Translate the story into $nativeLanguageName. Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
+    String characterRequirement = '';
+    if (_targetLanguage == 'zh-TW') {
+      characterRequirement =
+          'Use Traditional Chinese characters and the Chinese used in Taiwan. Do not use Simplified Chinese characters. ';
+    }
+
+    return 'Create a unique and engaging story in $targetLanguage. $difficultyDescription '
+        'The story should be in the genre of $randomGenre. '
+        '$characterRequirement'
+        'Ensure that the characters have realistic names. The names should be randomly selected to avoid defaulting to common names. '
+        'The characters should also have distinct personalities and interactions that contribute to a clear and engaging plot. '
+        'The story should be short but engaging. Do not include pronunciations or Roman alphabet transcriptions in parentheses. '
+        'Each sentence must be separated by a newline character "\n". Translate the story into $nativeLanguage. '
+        'Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
   }
 
   Future<void> _preloadAudioFiles(String storyPart, String uniqueId) async {
