@@ -860,12 +860,18 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                           ],
                         ),
                       ] else ...[
+                        Text(
+                          '${_sentenceIndex + 1} / ${_sentences.length}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
                         SelectableText(
                           _currentSentence,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 24,
-                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 20),
