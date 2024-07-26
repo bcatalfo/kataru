@@ -840,102 +840,95 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         },
         child: Container(
           color: Colors.transparent, // Ensure the container is tappable
-          child: Column(
-            children: [
-              Spacer(flex: 4), // Equal flex value for the top spacer
-              Expanded(
-                flex: 6, // Increased flex value for the main content
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (_isInitialLoad) ...[
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const CircularProgressIndicator(),
-                                const SizedBox(width: 10),
-                                const Text("Loading story..."),
-                              ],
-                            ),
-                          ] else ...[
-                            SelectableText(
-                              _currentSentence,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Text(
-                              _currentSentenceTranslation,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                            Spacer(flex: 1), // Spacer for balance
-                            if (_isStoryLoading) ...[
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const CircularProgressIndicator(),
-                                  const SizedBox(width: 10),
-                                  const Text("Loading next story..."),
-                                ],
-                              ),
-                            ] else ...[
-                              const Text(
-                                "Swipe up for a new story",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ],
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_isInitialLoad) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const CircularProgressIndicator(),
+                            const SizedBox(width: 10),
+                            const Text("Loading story..."),
                           ],
-                          Spacer(
-                              flex:
-                                  1), // Equal flex value for the bottom spacer
+                        ),
+                      ] else ...[
+                        SelectableText(
+                          _currentSentence,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          _currentSentenceTranslation,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        const SizedBox(
+                            height:
+                                20), // Space between translation and swipe up
+                        if (_isStoryLoading) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const CircularProgressIndicator(),
+                              const SizedBox(width: 10),
+                              const Text("Loading next story..."),
+                            ],
+                          ),
+                        ] else ...[
+                          const Text(
+                            "Swipe up for a new story",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
                         ],
-                      ),
-                    ),
+                      ],
+                    ],
                   ),
                 ),
               ),
-              SafeArea(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: _previousSentence,
-                    ),
-                    IconButton(
-                      icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-                      onPressed: _isPlaying ? _pauseAudio : _resumeAudio,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.arrow_forward),
-                      onPressed: _nextSentence,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.translate),
-                      onPressed: _toggleTranslations,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: _previousSentence,
+            ),
+            IconButton(
+              icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+              onPressed: _isPlaying ? _pauseAudio : _resumeAudio,
+            ),
+            IconButton(
+              icon: const Icon(Icons.arrow_forward),
+              onPressed: _nextSentence,
+            ),
+            IconButton(
+              icon: const Icon(Icons.translate),
+              onPressed: _toggleTranslations,
+            ),
+          ],
         ),
       ),
     );
