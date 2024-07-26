@@ -440,28 +440,22 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     switch (_difficultyLevel) {
       case 'Absolute Beginner':
-        difficultyDescription =
-            'Use extremely simple vocabulary and extremely short sentences and extremely simple grammar.';
+        difficultyDescription = 'Use extremely simple vocabulary and grammar.';
         break;
       case 'Beginner':
-        difficultyDescription =
-            'Use very simple vocabulary and very short sentences and very simple grammar.';
+        difficultyDescription = 'Use very simple vocabulary and grammar.';
         break;
       case 'Intermediate':
-        difficultyDescription =
-            'Use simple vocabulary and short sentences and simple grammar.';
+        difficultyDescription = 'Use simple vocabulary and grammar.';
         break;
       case 'Advanced':
-        difficultyDescription =
-            'Use somewhat simple vocabulary and somewhat short sentences and somewhat simple grammar.';
+        difficultyDescription = 'Use typical vocabulary and grammar.';
         break;
       case 'Expert':
-        difficultyDescription =
-            'Use typical vocabulary and typical sentence length and typical grammar.';
+        difficultyDescription = 'Use sophisticated vocabulary and grammar.';
         break;
       default:
-        difficultyDescription =
-            'Use extremely simple vocabulary and extremely short sentences and extremely simple grammar.';
+        difficultyDescription = 'Use extremely simple vocabulary and grammar.';
     }
 
     String characterRequirement = '';
@@ -470,12 +464,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           'Use Traditional Chinese characters and the Chinese used in Taiwan. Do not use Simplified Chinese characters. ';
     }
 
-    return 'Create a unique and engaging story in $targetLanguage. $difficultyDescription '
+    return 'Write a story in $targetLanguage. $difficultyDescription '
         'The story should be in the genre of $randomGenre. '
         '$characterRequirement'
-        'Ensure that the characters have realistic names. The names should be randomly selected to avoid defaulting to common names. '
-        'The characters should also have distinct personalities and interactions that contribute to a clear and engaging plot. '
-        'The story should be short but engaging. Do not include pronunciations or Roman alphabet transcriptions in parentheses. '
         'Each sentence must be separated by a newline character "\n". Translate the story into $nativeLanguage. '
         'Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
   }
