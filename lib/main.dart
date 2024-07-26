@@ -130,7 +130,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   final AudioPlayer _audioPlayer = AudioPlayer();
   List<File> _audioFiles = [];
   bool _isPlaying = false;
-  bool _showTranslations = false;
+  bool _showTranslations = true;
   bool _isStoryLoading = false;
   String _narrationSessionId = '';
   String _difficultyLevel = 'Absolute Beginner';
