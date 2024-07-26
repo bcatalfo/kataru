@@ -869,7 +869,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        Text(
+                        SelectableText(
                           _currentSentenceTranslation,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
