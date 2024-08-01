@@ -818,6 +818,80 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     );
   }
 
+  void _breakDownSentence() async {
+    _pauseAudio(); // Pause the story
+    _showLoadingDialog(); // Show loading indicator
+    final breakdown = await _getSentenceBreakdown(
+        _currentSentence); // Get breakdown from Gemini
+    Navigator.of(context).pop(); // Close loading indicator
+    _showBreakdownDialog(breakdown); // Show breakdown in a dialog
+  }
+
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Row(
+            children: const [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text("Loading explanation..."),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showBreakdownDialog(String breakdown) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Sentence Breakdown'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                SelectableText(_removeMarkdownSyntax(breakdown)),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _playCurrentSentenceFromBeginning(); // Play the sentence from the beginning
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _playCurrentSentenceFromBeginning() {
+    _audioPlayer.stop();
+    _narrateCurrentSentence(_narrationSessionId);
+  }
+
+  Future<String> _getSentenceBreakdown(String sentence) async {
+    // Use Gemini API to get the breakdown of the sentence
+    final model =
+        FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-pro-001');
+    final prompt =
+        'Break down the following sentence in ${_nativeLanguage}, providing romanizations only once for words in languages that do not use the Roman alphabet, and explaining the meaning and grammatical function of each word while avoiding explanations of obvious punctuation like commas: "$sentence"';
+    final response = await model.generateContent([Content.text(prompt)]);
+    return response.text ?? 'No breakdown available';
+  }
+
+  String _removeMarkdownSyntax(String text) {
+    return text.replaceAll('*', '').replaceAll('#', '');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -918,6 +992,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            IconButton(
+              icon: const Icon(Icons.help_outline),
+              onPressed: _breakDownSentence,
+            ),
             IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: _previousSentence,
