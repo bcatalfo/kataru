@@ -874,6 +874,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   void _playCurrentSentenceFromBeginning() {
+    setState(() {
+      _narrationSessionId = DateTime.now().millisecondsSinceEpoch.toString();
+    });
     _audioPlayer.stop();
     _narrateCurrentSentence(_narrationSessionId);
   }
