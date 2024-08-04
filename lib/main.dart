@@ -149,18 +149,63 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   List<File> _preloadedAudioFiles = [];
 
   final List<Map<String, String>> _languages = [
+    {'name': 'Afrikaans (South Africa) 🇿🇦', 'code': 'af-ZA'},
+    {'name': 'Arabic 🇦🇪', 'code': 'ar-XA'},
+    {'name': 'Basque (Spain) 🇪🇸', 'code': 'eu-ES'},
+    {'name': 'Bengali (India) 🇮🇳', 'code': 'bn-IN'},
+    {'name': 'Bulgarian (Bulgaria) 🇧🇬', 'code': 'bg-BG'},
+    {'name': 'Catalan (Spain) 🇪🇸', 'code': 'ca-ES'},
+    {'name': 'Chinese (Hong Kong) 🇭🇰', 'code': 'yue-HK'},
+    {'name': 'Czech (Czech Republic) 🇨🇿', 'code': 'cs-CZ'},
+    {'name': 'Danish (Denmark) 🇩🇰', 'code': 'da-DK'},
+    {'name': 'Dutch (Belgium) 🇧🇪', 'code': 'nl-BE'},
+    {'name': 'Dutch (Netherlands) 🇳🇱', 'code': 'nl-NL'},
+    {'name': 'English (Australia) 🇦🇺', 'code': 'en-AU'},
+    {'name': 'English (India) 🇮🇳', 'code': 'en-IN'},
+    {'name': 'English (UK) 🇬🇧', 'code': 'en-GB'},
     {'name': 'English (US) 🇺🇸', 'code': 'en-US'},
-    {'name': 'Japanese 🇯🇵', 'code': 'ja-JP'},
-    {'name': 'Spanish (Spain) 🇪🇸', 'code': 'es-ES'},
-    {'name': 'Mandarin Chinese (Simplified Characters) 🇨🇳', 'code': 'zh-CN'},
-    {'name': 'Mandarin Chinese (Traditional Characters) 🇹🇼', 'code': 'zh-TW'},
-    {'name': 'Korean 🇰🇷', 'code': 'ko-KR'},
-    {'name': 'French 🇫🇷', 'code': 'fr-FR'},
-    {'name': 'German 🇩🇪', 'code': 'de-DE'},
+    {'name': 'Filipino (Philippines) 🇵🇭', 'code': 'fil-PH'},
+    {'name': 'Finnish (Finland) 🇫🇮', 'code': 'fi-FI'},
+    {'name': 'French (Canada) 🇨🇦', 'code': 'fr-CA'},
+    {'name': 'French (France) 🇫🇷', 'code': 'fr-FR'},
+    {'name': 'Galician (Spain) 🇪🇸', 'code': 'gl-ES'},
+    {'name': 'German (Germany) 🇩🇪', 'code': 'de-DE'},
+    {'name': 'Greek (Greece) 🇬🇷', 'code': 'el-GR'},
+    {'name': 'Gujarati (India) 🇮🇳', 'code': 'gu-IN'},
+    {'name': 'Hebrew (Israel) 🇮🇱', 'code': 'he-IL'},
+    {'name': 'Hindi (India) 🇮🇳', 'code': 'hi-IN'},
+    {'name': 'Hungarian (Hungary) 🇭🇺', 'code': 'hu-HU'},
+    {'name': 'Icelandic (Iceland) 🇮🇸', 'code': 'is-IS'},
+    {'name': 'Indonesian (Indonesia) 🇮🇩', 'code': 'id-ID'},
+    {'name': 'Italian (Italy) 🇮🇹', 'code': 'it-IT'},
+    {'name': 'Japanese (Japan) 🇯🇵', 'code': 'ja-JP'},
+    {'name': 'Kannada (India) 🇮🇳', 'code': 'kn-IN'},
+    {'name': 'Korean (South Korea) 🇰🇷', 'code': 'ko-KR'},
+    {'name': 'Latvian (Latvia) 🇱🇻', 'code': 'lv-LV'},
+    {'name': 'Lithuanian (Lithuania) 🇱🇹', 'code': 'lt-LT'},
+    {'name': 'Malay (Malaysia) 🇲🇾', 'code': 'ms-MY'},
+    {'name': 'Malayalam (India) 🇮🇳', 'code': 'ml-IN'},
+    {'name': 'Mandarin Chinese (China) 🇨🇳', 'code': 'cmn-CN'},
+    {'name': 'Mandarin Chinese (Taiwan) 🇹🇼', 'code': 'cmn-TW'},
+    {'name': 'Marathi (India) 🇮🇳', 'code': 'mr-IN'},
+    {'name': 'Norwegian (Norway) 🇳🇴', 'code': 'nb-NO'},
+    {'name': 'Polish (Poland) 🇵🇱', 'code': 'pl-PL'},
     {'name': 'Portuguese (Brazil) 🇧🇷', 'code': 'pt-BR'},
-    {'name': 'Russian 🇷🇺', 'code': 'ru-RU'},
-    {'name': 'Hindi 🇮🇳', 'code': 'hi-IN'},
-    {'name': 'Italian 🇮🇹', 'code': 'it-IT'},
+    {'name': 'Portuguese (Portugal) 🇵🇹', 'code': 'pt-PT'},
+    {'name': 'Punjabi (India) 🇮🇳', 'code': 'pa-IN'},
+    {'name': 'Romanian (Romania) 🇷🇴', 'code': 'ro-RO'},
+    {'name': 'Russian (Russia) 🇷🇺', 'code': 'ru-RU'},
+    {'name': 'Serbian (Cyrillic) 🇷🇸', 'code': 'sr-RS'},
+    {'name': 'Slovak (Slovakia) 🇸🇰', 'code': 'sk-SK'},
+    {'name': 'Spanish (Spain) 🇪🇸', 'code': 'es-ES'},
+    {'name': 'Spanish (US) 🇺🇸', 'code': 'es-US'},
+    {'name': 'Swedish (Sweden) 🇸🇪', 'code': 'sv-SE'},
+    {'name': 'Tamil (India) 🇮🇳', 'code': 'ta-IN'},
+    {'name': 'Telugu (India) 🇮🇳', 'code': 'te-IN'},
+    {'name': 'Thai (Thailand) 🇹🇭', 'code': 'th-TH'},
+    {'name': 'Turkish (Turkey) 🇹🇷', 'code': 'tr-TR'},
+    {'name': 'Ukrainian (Ukraine) 🇺🇦', 'code': 'uk-UA'},
+    {'name': 'Vietnamese (Vietnam) 🇻🇳', 'code': 'vi-VN'}
   ];
   final _scopes = [TexttospeechApi.cloudPlatformScope];
   late final TexttospeechApi _textToSpeechApi;
@@ -459,9 +504,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     }
 
     String characterRequirement = '';
-    if (_targetLanguage == 'zh-TW') {
+    if (_targetLanguage == 'cmn-TW') {
       characterRequirement =
           'Use Traditional Chinese characters and the Chinese used in Taiwan. Do not use Simplified Chinese characters. ';
+    } else if (_targetLanguage == 'cmn-CN') {
+      characterRequirement =
+          'Use Simplified Chinese characters and the Chinese used in mainland China. Do not use Traditional Chinese characters. ';
     }
 
     return 'Write a story in $targetLanguage. $difficultyDescription '
@@ -498,32 +546,122 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   String _getVoiceForLanguage(String languageCode) {
     switch (languageCode) {
-      case 'ja-JP':
-        return 'ja-JP-Neural2-B'; // Japanese (Female)
+      case 'af-ZA':
+        return 'af-ZA-Standard-A'; // Afrikaans (South Africa) - Female
+      case 'ar-XA':
+        return 'ar-XA-Standard-A'; // Arabic - Female
+      case 'eu-ES':
+        return 'eu-ES-Standard-A'; // Basque (Spain) - Female
+      case 'bn-IN':
+        return 'bn-IN-Standard-A'; // Bengali (India) - Female
+      case 'bg-BG':
+        return 'bg-BG-Standard-A'; // Bulgarian (Bulgaria) - Female
+      case 'ca-ES':
+        return 'ca-ES-Standard-A'; // Catalan (Spain) - Female
+      case 'yue-HK':
+        return 'yue-HK-Standard-A'; // Chinese (Hong Kong) - Female
+      case 'cs-CZ':
+        return 'cs-CZ-Standard-A'; // Czech (Czech Republic) - Female
+      case 'da-DK':
+        return 'da-DK-Standard-A'; // Danish (Denmark) - Female
+      case 'nl-BE':
+        return 'nl-BE-Standard-A'; // Dutch (Belgium) - Female
+      case 'nl-NL':
+        return 'nl-NL-Standard-A'; // Dutch (Netherlands) - Female
+      case 'en-AU':
+        return 'en-AU-Standard-A'; // English (Australia) - Female
+      case 'en-IN':
+        return 'en-IN-Standard-A'; // English (India) - Female
+      case 'en-GB':
+        return 'en-GB-Standard-A'; // English (UK) - Female
       case 'en-US':
-        return 'en-US-Neural2-D'; // English US (Male)
-      case 'es-ES':
-        return 'es-ES-Neural2-A'; // Spanish Spain (Female)
-      case 'zh-CN':
-        return 'cmn-CN-Wavenet-A'; // Mandarin Chinese Simplified (Female)
-      case 'zh-TW':
-        return 'cmn-TW-Wavenet-A'; // Mandarin Chinese Traditional (Female)
-      case 'ko-KR':
-        return 'ko-KR-Neural2-A'; // Korean (Female)
+        return 'en-US-Standard-A'; // English (US) - Male
+      case 'fil-PH':
+        return 'fil-PH-Standard-A'; // Filipino (Philippines) - Female
+      case 'fi-FI':
+        return 'fi-FI-Standard-A'; // Finnish (Finland) - Female
+      case 'fr-CA':
+        return 'fr-CA-Standard-A'; // French (Canada) - Female
       case 'fr-FR':
-        return 'fr-FR-Neural2-A'; // French (Female)
+        return 'fr-FR-Standard-A'; // French (France) - Female
+      case 'gl-ES':
+        return 'gl-ES-Standard-A'; // Galician (Spain) - Female
       case 'de-DE':
-        return 'de-DE-Neural2-A'; // German (Female)
-      case 'pt-BR':
-        return 'pt-BR-Neural2-A'; // Portuguese Brazil (Female)
-      case 'ru-RU':
-        return 'ru-RU-Wavenet-A'; // Russian (Female)
+        return 'de-DE-Standard-A'; // German (Germany) - Female
+      case 'el-GR':
+        return 'el-GR-Standard-A'; // Greek (Greece) - Female
+      case 'gu-IN':
+        return 'gu-IN-Standard-A'; // Gujarati (India) - Female
+      case 'he-IL':
+        return 'he-IL-Standard-A'; // Hebrew (Israel) - Female
       case 'hi-IN':
-        return 'hi-IN-Neural2-A'; // Hindi (Female)
+        return 'hi-IN-Standard-A'; // Hindi (India) - Female
+      case 'hu-HU':
+        return 'hu-HU-Standard-A'; // Hungarian (Hungary) - Female
+      case 'is-IS':
+        return 'is-IS-Standard-A'; // Icelandic (Iceland) - Female
+      case 'id-ID':
+        return 'id-ID-Standard-A'; // Indonesian (Indonesia) - Female
       case 'it-IT':
-        return 'it-IT-Neural2-A'; // Italian (Female)
+        return 'it-IT-Standard-A'; // Italian (Italy) - Female
+      case 'ja-JP':
+        return 'ja-JP-Standard-A'; // Japanese (Japan) - Female
+      case 'kn-IN':
+        return 'kn-IN-Standard-A'; // Kannada (India) - Female
+      case 'ko-KR':
+        return 'ko-KR-Standard-A'; // Korean (South Korea) - Female
+      case 'lv-LV':
+        return 'lv-LV-Standard-A'; // Latvian (Latvia) - Male
+      case 'lt-LT':
+        return 'lt-LT-Standard-A'; // Lithuanian (Lithuania) - Male
+      case 'ms-MY':
+        return 'ms-MY-Standard-A'; // Malay (Malaysia) - Female
+      case 'ml-IN':
+        return 'ml-IN-Standard-A'; // Malayalam (India) - Female
+      case 'cmn-CN':
+        return 'cmn-CN-Standard-A'; // Mandarin Chinese (China) - Female
+      case 'cmn-TW':
+        return 'cmn-TW-Standard-A'; // Mandarin Chinese (Taiwan) - Female
+      case 'mr-IN':
+        return 'mr-IN-Standard-A'; // Marathi (India) - Female
+      case 'nb-NO':
+        return 'nb-NO-Standard-A'; // Norwegian (Norway) - Female
+      case 'pl-PL':
+        return 'pl-PL-Standard-A'; // Polish (Poland) - Female
+      case 'pt-BR':
+        return 'pt-BR-Standard-A'; // Portuguese (Brazil) - Female
+      case 'pt-PT':
+        return 'pt-PT-Standard-A'; // Portuguese (Portugal) - Female
+      case 'pa-IN':
+        return 'pa-IN-Standard-A'; // Punjabi (India) - Female
+      case 'ro-RO':
+        return 'ro-RO-Standard-A'; // Romanian (Romania) - Female
+      case 'ru-RU':
+        return 'ru-RU-Standard-A'; // Russian (Russia) - Female
+      case 'sr-RS':
+        return 'sr-RS-Standard-A'; // Serbian (Cyrillic) - Female
+      case 'sk-SK':
+        return 'sk-SK-Standard-A'; // Slovak (Slovakia) - Female
+      case 'es-ES':
+        return 'es-ES-Standard-A'; // Spanish (Spain) - Female
+      case 'es-US':
+        return 'es-US-Standard-A'; // Spanish (US) - Female
+      case 'sv-SE':
+        return 'sv-SE-Standard-A'; // Swedish (Sweden) - Female
+      case 'ta-IN':
+        return 'ta-IN-Standard-A'; // Tamil (India) - Female
+      case 'te-IN':
+        return 'te-IN-Standard-A'; // Telugu (India) - Female
+      case 'th-TH':
+        return 'th-TH-Standard-A'; // Thai (Thailand) - Female
+      case 'tr-TR':
+        return 'tr-TR-Standard-A'; // Turkish (Turkey) - Female
+      case 'uk-UA':
+        return 'uk-UA-Standard-A'; // Ukrainian (Ukraine) - Female
+      case 'vi-VN':
+        return 'vi-VN-Standard-A'; // Vietnamese (Vietnam) - Female
       default:
-        return 'en-US-Wavenet-D'; // Default to English US (Male)
+        return 'en-US-Standard-A'; // Default to English (US) - Male
     }
   }
 
