@@ -557,20 +557,19 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     final sentenceFile = _audioFiles[_sentenceIndex];
 
     try {
+      // Start playing the audio file
       await _audioPlayer.play(DeviceFileSource(sentenceFile.path));
-      setState(() {
-        _isPlaying = true;
-      });
+      if (!_isPlaying) {
+        setState(() {
+          _isPlaying = true;
+        });
+      }
 
       // Wait for the audio to complete
       await _audioPlayer.onPlayerComplete.first;
 
       if (sessionId != _narrationSessionId)
         return; // Exit if the session ID has changed
-
-      setState(() {
-        _isPlaying = false;
-      });
 
       if (_sentenceIndex < _sentences.length - 1) {
         debugPrint('index: $_sentenceIndex');
@@ -597,22 +596,26 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         await _narrateCurrentSentence(sessionId);
       }
     } catch (e) {
-      print('Error playing audio file: $e');
+      debugPrint('Error playing audio file: $e');
     }
   }
 
   void _pauseAudio() {
     _audioPlayer.pause();
-    setState(() {
-      _isPlaying = false;
-    });
+    if (_isPlaying) {
+      setState(() {
+        _isPlaying = false;
+      });
+    }
   }
 
   void _resumeAudio() {
     _audioPlayer.resume();
-    setState(() {
-      _isPlaying = true;
-    });
+    if (!_isPlaying) {
+      setState(() {
+        _isPlaying = true;
+      });
+    }
   }
 
   void _previousSentence() {
