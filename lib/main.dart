@@ -378,9 +378,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     // Start the animation and wait for it to finish
     await _animationController.forward();
 
-    // Set the state to indicate loading
+    // Set the state to indicate loading and reset sentence index
     setState(() {
       _isStoryLoading = true;
+      _sentenceIndex = 0; // Reset to the start of the story
+      _narrationSessionId =
+          DateTime.now().millisecondsSinceEpoch.toString(); // Reset session ID
     });
 
     // Show interstitial ad after every story
@@ -388,9 +391,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       _showInterstitialAd();
       return; // Do not generate a story now, it will be handled in the ad callback
     }
-
-    // Reset the narration session ID for the new story
-    _narrationSessionId = DateTime.now().millisecondsSinceEpoch.toString();
 
     // Display the preloaded story without waiting for narration to complete
     await _displayPreloadedStory();
@@ -421,6 +421,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           _showTranslations && _translations.isNotEmpty ? _translations[0] : '';
       _audioFiles = List<File>.from(_preloadedAudioFiles);
       _preloadedStory = null; // Clear preloaded story after using
+      _narrationSessionId =
+          DateTime.now().millisecondsSinceEpoch.toString(); // Reset session ID
     });
 
     debugPrint('Sentences: $_sentences');
