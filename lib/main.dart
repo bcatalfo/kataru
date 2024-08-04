@@ -421,8 +421,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           _showTranslations && _translations.isNotEmpty ? _translations[0] : '';
       _audioFiles = List<File>.from(_preloadedAudioFiles);
       _preloadedStory = null; // Clear preloaded story after using
-      _narrationSessionId =
-          DateTime.now().millisecondsSinceEpoch.toString(); // Reset session ID
+      _narrationSessionId = DateTime.now().millisecondsSinceEpoch.toString();
     });
 
     debugPrint('Sentences: $_sentences');
@@ -440,7 +439,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     final model =
         FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-pro-001');
-
     final prompt = [Content.text(promptText)];
 
     debugPrint('prompt: $promptText');
@@ -465,9 +463,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       'translationPart': cleanedTranslationPart,
     };
 
-    // Preload audio files with a unique identifier
+    // Select a random voice for the current story
+    final selectedVoice = _getVoiceForLanguage(_targetLanguage);
+
+    // Preload audio files with a unique identifier and the selected voice
     final uniqueId = DateTime.now().millisecondsSinceEpoch.toString();
-    await _preloadAudioFiles(cleanedStoryPart, uniqueId);
+    await _preloadAudioFiles(cleanedStoryPart, uniqueId, selectedVoice);
   }
 
   String _buildPromptText() {
@@ -521,15 +522,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         'Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
   }
 
-  Future<void> _preloadAudioFiles(String storyPart, String uniqueId) async {
+  Future<void> _preloadAudioFiles(
+      String storyPart, String uniqueId, String voiceName) async {
     _preloadedAudioFiles.clear();
     final sentences = _splitSentences(storyPart);
     final tempDir = await getTemporaryDirectory();
 
     for (int i = 0; i < sentences.length; i++) {
       final sentence = sentences[i];
-      final file = await _synthesizeAudio(sentence, _targetLanguage,
-          _getVoiceForLanguage(_targetLanguage), tempDir, uniqueId, i);
+      final file = await _synthesizeAudio(
+          sentence, _targetLanguage, voiceName, tempDir, uniqueId, i);
       if (file != null) {
         _preloadedAudioFiles.add(file);
       }
@@ -547,124 +549,255 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   String _getVoiceForLanguage(String languageCode) {
-    switch (languageCode) {
-      case 'af-ZA':
-        return 'af-ZA-Standard-A'; // Afrikaans (South Africa) - Female
-      case 'ar-XA':
-        return 'ar-XA-Standard-A'; // Arabic - Female
-      case 'eu-ES':
-        return 'eu-ES-Standard-A'; // Basque (Spain) - Female
-      case 'bn-IN':
-        return 'bn-IN-Standard-A'; // Bengali (India) - Female
-      case 'bg-BG':
-        return 'bg-BG-Standard-A'; // Bulgarian (Bulgaria) - Female
-      case 'ca-ES':
-        return 'ca-ES-Standard-A'; // Catalan (Spain) - Female
-      case 'yue-HK':
-        return 'yue-HK-Standard-A'; // Chinese (Hong Kong) - Female
-      case 'cs-CZ':
-        return 'cs-CZ-Standard-A'; // Czech (Czech Republic) - Female
-      case 'da-DK':
-        return 'da-DK-Standard-A'; // Danish (Denmark) - Female
-      case 'nl-BE':
-        return 'nl-BE-Standard-A'; // Dutch (Belgium) - Female
-      case 'nl-NL':
-        return 'nl-NL-Standard-A'; // Dutch (Netherlands) - Female
-      case 'en-AU':
-        return 'en-AU-Standard-A'; // English (Australia) - Female
-      case 'en-IN':
-        return 'en-IN-Standard-A'; // English (India) - Female
-      case 'en-GB':
-        return 'en-GB-Standard-A'; // English (UK) - Female
-      case 'en-US':
-        return 'en-US-Standard-A'; // English (US) - Male
-      case 'fil-PH':
-        return 'fil-PH-Standard-A'; // Filipino (Philippines) - Female
-      case 'fi-FI':
-        return 'fi-FI-Standard-A'; // Finnish (Finland) - Female
-      case 'fr-CA':
-        return 'fr-CA-Standard-A'; // French (Canada) - Female
-      case 'fr-FR':
-        return 'fr-FR-Standard-A'; // French (France) - Female
-      case 'gl-ES':
-        return 'gl-ES-Standard-A'; // Galician (Spain) - Female
-      case 'de-DE':
-        return 'de-DE-Standard-A'; // German (Germany) - Female
-      case 'el-GR':
-        return 'el-GR-Standard-A'; // Greek (Greece) - Female
-      case 'gu-IN':
-        return 'gu-IN-Standard-A'; // Gujarati (India) - Female
-      case 'he-IL':
-        return 'he-IL-Standard-A'; // Hebrew (Israel) - Female
-      case 'hi-IN':
-        return 'hi-IN-Standard-A'; // Hindi (India) - Female
-      case 'hu-HU':
-        return 'hu-HU-Standard-A'; // Hungarian (Hungary) - Female
-      case 'is-IS':
-        return 'is-IS-Standard-A'; // Icelandic (Iceland) - Female
-      case 'id-ID':
-        return 'id-ID-Standard-A'; // Indonesian (Indonesia) - Female
-      case 'it-IT':
-        return 'it-IT-Standard-A'; // Italian (Italy) - Female
-      case 'ja-JP':
-        return 'ja-JP-Standard-A'; // Japanese (Japan) - Female
-      case 'kn-IN':
-        return 'kn-IN-Standard-A'; // Kannada (India) - Female
-      case 'ko-KR':
-        return 'ko-KR-Standard-A'; // Korean (South Korea) - Female
-      case 'lv-LV':
-        return 'lv-LV-Standard-A'; // Latvian (Latvia) - Male
-      case 'lt-LT':
-        return 'lt-LT-Standard-A'; // Lithuanian (Lithuania) - Male
-      case 'ms-MY':
-        return 'ms-MY-Standard-A'; // Malay (Malaysia) - Female
-      case 'ml-IN':
-        return 'ml-IN-Standard-A'; // Malayalam (India) - Female
-      case 'cmn-CN':
-        return 'cmn-CN-Standard-A'; // Mandarin Chinese (China) - Female
-      case 'cmn-TW':
-        return 'cmn-TW-Standard-A'; // Mandarin Chinese (Taiwan) - Female
-      case 'mr-IN':
-        return 'mr-IN-Standard-A'; // Marathi (India) - Female
-      case 'nb-NO':
-        return 'nb-NO-Standard-A'; // Norwegian (Norway) - Female
-      case 'pl-PL':
-        return 'pl-PL-Standard-A'; // Polish (Poland) - Female
-      case 'pt-BR':
-        return 'pt-BR-Standard-A'; // Portuguese (Brazil) - Female
-      case 'pt-PT':
-        return 'pt-PT-Standard-A'; // Portuguese (Portugal) - Female
-      case 'pa-IN':
-        return 'pa-IN-Standard-A'; // Punjabi (India) - Female
-      case 'ro-RO':
-        return 'ro-RO-Standard-A'; // Romanian (Romania) - Female
-      case 'ru-RU':
-        return 'ru-RU-Standard-A'; // Russian (Russia) - Female
-      case 'sr-RS':
-        return 'sr-RS-Standard-A'; // Serbian (Cyrillic) - Female
-      case 'sk-SK':
-        return 'sk-SK-Standard-A'; // Slovak (Slovakia) - Female
-      case 'es-ES':
-        return 'es-ES-Standard-A'; // Spanish (Spain) - Female
-      case 'es-US':
-        return 'es-US-Standard-A'; // Spanish (US) - Female
-      case 'sv-SE':
-        return 'sv-SE-Standard-A'; // Swedish (Sweden) - Female
-      case 'ta-IN':
-        return 'ta-IN-Standard-A'; // Tamil (India) - Female
-      case 'te-IN':
-        return 'te-IN-Standard-A'; // Telugu (India) - Female
-      case 'th-TH':
-        return 'th-TH-Standard-A'; // Thai (Thailand) - Female
-      case 'tr-TR':
-        return 'tr-TR-Standard-A'; // Turkish (Turkey) - Female
-      case 'uk-UA':
-        return 'uk-UA-Standard-A'; // Ukrainian (Ukraine) - Female
-      case 'vi-VN':
-        return 'vi-VN-Standard-A'; // Vietnamese (Vietnam) - Female
-      default:
-        return 'en-US-Standard-A'; // Default to English (US) - Male
-    }
+    final Map<String, List<String>> voices = {
+      'af-ZA': ['af-ZA-Standard-A'],
+      'ar-XA': [
+        'ar-XA-Standard-A',
+        'ar-XA-Standard-B',
+        'ar-XA-Standard-C',
+        'ar-XA-Standard-D'
+      ],
+      'eu-ES': ['eu-ES-Standard-A'],
+      'bn-IN': [
+        'bn-IN-Standard-A',
+        'bn-IN-Standard-B',
+        'bn-IN-Standard-C',
+        'bn-IN-Standard-D'
+      ],
+      'bg-BG': ['bg-BG-Standard-A'],
+      'ca-ES': ['ca-ES-Standard-A'],
+      'yue-HK': [
+        'yue-HK-Standard-A',
+        'yue-HK-Standard-B',
+        'yue-HK-Standard-C',
+        'yue-HK-Standard-D'
+      ],
+      'cs-CZ': ['cs-CZ-Standard-A'],
+      'da-DK': [
+        'da-DK-Standard-A',
+        'da-DK-Standard-C',
+        'da-DK-Standard-D',
+        'da-DK-Standard-E'
+      ],
+      'nl-BE': ['nl-BE-Standard-A', 'nl-BE-Standard-B'],
+      'nl-NL': [
+        'nl-NL-Standard-A',
+        'nl-NL-Standard-B',
+        'nl-NL-Standard-C',
+        'nl-NL-Standard-D',
+        'nl-NL-Standard-E'
+      ],
+      'en-AU': [
+        'en-AU-Standard-A',
+        'en-AU-Standard-B',
+        'en-AU-Standard-C',
+        'en-AU-Standard-D'
+      ],
+      'en-IN': [
+        'en-IN-Standard-A',
+        'en-IN-Standard-B',
+        'en-IN-Standard-C',
+        'en-IN-Standard-D'
+      ],
+      'en-GB': [
+        'en-GB-Standard-A',
+        'en-GB-Standard-B',
+        'en-GB-Standard-C',
+        'en-GB-Standard-D',
+        'en-GB-Standard-F'
+      ],
+      'en-US': [
+        'en-US-Standard-A',
+        'en-US-Standard-B',
+        'en-US-Standard-C',
+        'en-US-Standard-D',
+        'en-US-Standard-E',
+        'en-US-Standard-F',
+        'en-US-Standard-G',
+        'en-US-Standard-H',
+        'en-US-Standard-I',
+        'en-US-Standard-J'
+      ],
+      'fil-PH': [
+        'fil-PH-Standard-A',
+        'fil-PH-Standard-B',
+        'fil-PH-Standard-C',
+        'fil-PH-Standard-D'
+      ],
+      'fi-FI': ['fi-FI-Standard-A'],
+      'fr-CA': [
+        'fr-CA-Standard-A',
+        'fr-CA-Standard-B',
+        'fr-CA-Standard-C',
+        'fr-CA-Standard-D'
+      ],
+      'fr-FR': [
+        'fr-FR-Standard-A',
+        'fr-FR-Standard-B',
+        'fr-FR-Standard-C',
+        'fr-FR-Standard-D',
+        'fr-FR-Standard-E'
+      ],
+      'gl-ES': ['gl-ES-Standard-A'],
+      'de-DE': [
+        'de-DE-Standard-A',
+        'de-DE-Standard-B',
+        'de-DE-Standard-C',
+        'de-DE-Standard-D',
+        'de-DE-Standard-E',
+        'de-DE-Standard-F'
+      ],
+      'el-GR': ['el-GR-Standard-A'],
+      'gu-IN': [
+        'gu-IN-Standard-A',
+        'gu-IN-Standard-B',
+        'gu-IN-Standard-C',
+        'gu-IN-Standard-D'
+      ],
+      'he-IL': [
+        'he-IL-Standard-A',
+        'he-IL-Standard-B',
+        'he-IL-Standard-C',
+        'he-IL-Standard-D'
+      ],
+      'hi-IN': [
+        'hi-IN-Standard-A',
+        'hi-IN-Standard-B',
+        'hi-IN-Standard-C',
+        'hi-IN-Standard-D'
+      ],
+      'hu-HU': ['hu-HU-Standard-A'],
+      'is-IS': ['is-IS-Standard-A'],
+      'id-ID': [
+        'id-ID-Standard-A',
+        'id-ID-Standard-B',
+        'id-ID-Standard-C',
+        'id-ID-Standard-D'
+      ],
+      'it-IT': [
+        'it-IT-Standard-A',
+        'it-IT-Standard-B',
+        'it-IT-Standard-C',
+        'it-IT-Standard-D'
+      ],
+      'ja-JP': [
+        'ja-JP-Standard-A',
+        'ja-JP-Standard-B',
+        'ja-JP-Standard-C',
+        'ja-JP-Standard-D'
+      ],
+      'kn-IN': [
+        'kn-IN-Standard-A',
+        'kn-IN-Standard-B',
+        'kn-IN-Standard-C',
+        'kn-IN-Standard-D'
+      ],
+      'ko-KR': [
+        'ko-KR-Standard-A',
+        'ko-KR-Standard-B',
+        'ko-KR-Standard-C',
+        'ko-KR-Standard-D'
+      ],
+      'lv-LV': ['lv-LV-Standard-A'],
+      'lt-LT': ['lt-LT-Standard-A'],
+      'ms-MY': [
+        'ms-MY-Standard-A',
+        'ms-MY-Standard-B',
+        'ms-MY-Standard-C',
+        'ms-MY-Standard-D'
+      ],
+      'ml-IN': [
+        'ml-IN-Standard-A',
+        'ml-IN-Standard-B',
+        'ml-IN-Standard-C',
+        'ml-IN-Standard-D'
+      ],
+      'cmn-CN': [
+        'cmn-CN-Standard-A',
+        'cmn-CN-Standard-B',
+        'cmn-CN-Standard-C',
+        'cmn-CN-Standard-D'
+      ],
+      'cmn-TW': ['cmn-TW-Standard-A', 'cmn-TW-Standard-B', 'cmn-TW-Standard-C'],
+      'mr-IN': ['mr-IN-Standard-A', 'mr-IN-Standard-B', 'mr-IN-Standard-C'],
+      'nb-NO': [
+        'nb-NO-Standard-A',
+        'nb-NO-Standard-B',
+        'nb-NO-Standard-C',
+        'nb-NO-Standard-D',
+        'nb-NO-Standard-E'
+      ],
+      'pl-PL': [
+        'pl-PL-Standard-A',
+        'pl-PL-Standard-B',
+        'pl-PL-Standard-C',
+        'pl-PL-Standard-D',
+        'pl-PL-Standard-E'
+      ],
+      'pt-BR': ['pt-BR-Standard-A', 'pt-BR-Standard-B', 'pt-BR-Standard-C'],
+      'pt-PT': [
+        'pt-PT-Standard-A',
+        'pt-PT-Standard-B',
+        'pt-PT-Standard-C',
+        'pt-PT-Standard-D'
+      ],
+      'pa-IN': [
+        'pa-IN-Standard-A',
+        'pa-IN-Standard-B',
+        'pa-IN-Standard-C',
+        'pa-IN-Standard-D'
+      ],
+      'ro-RO': ['ro-RO-Standard-A'],
+      'ru-RU': [
+        'ru-RU-Standard-A',
+        'ru-RU-Standard-B',
+        'ru-RU-Standard-C',
+        'ru-RU-Standard-D',
+        'ru-RU-Standard-E'
+      ],
+      'sr-RS': ['sr-RS-Standard-A'],
+      'sk-SK': ['sk-SK-Standard-A'],
+      'es-ES': [
+        'es-ES-Standard-A',
+        'es-ES-Standard-B',
+        'es-ES-Standard-C',
+        'es-ES-Standard-D'
+      ],
+      'es-US': ['es-US-Standard-A', 'es-US-Standard-B', 'es-US-Standard-C'],
+      'sv-SE': [
+        'sv-SE-Standard-A',
+        'sv-SE-Standard-B',
+        'sv-SE-Standard-C',
+        'sv-SE-Standard-D',
+        'sv-SE-Standard-E'
+      ],
+      'ta-IN': [
+        'ta-IN-Standard-A',
+        'ta-IN-Standard-B',
+        'ta-IN-Standard-C',
+        'ta-IN-Standard-D'
+      ],
+      'te-IN': ['te-IN-Standard-A', 'te-IN-Standard-B'],
+      'th-TH': ['th-TH-Standard-A'],
+      'tr-TR': [
+        'tr-TR-Standard-A',
+        'tr-TR-Standard-B',
+        'tr-TR-Standard-C',
+        'tr-TR-Standard-D',
+        'tr-TR-Standard-E'
+      ],
+      'uk-UA': ['uk-UA-Standard-A'],
+      'vi-VN': [
+        'vi-VN-Standard-A',
+        'vi-VN-Standard-B',
+        'vi-VN-Standard-C',
+        'vi-VN-Standard-D'
+      ],
+    };
+
+    final random = Random();
+    final selectedVoices = voices[languageCode] ?? ['en-US-Standard-A'];
+    return selectedVoices[random.nextInt(selectedVoices.length)];
   }
 
   Future<File?> _synthesizeAudio(String text, String languageCode,
