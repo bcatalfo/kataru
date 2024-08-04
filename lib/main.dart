@@ -928,7 +928,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                           physics: NeverScrollableScrollPhysics(),
                           children: genres.map((String genre) {
                             return CheckboxListTile(
-                              title: Text(genre),
+                              title: Text(
+                                genre,
+                                style: TextStyle(fontSize: 12),
+                              ),
                               value: _selectedGenres.contains(genre),
                               onChanged: (bool? value) {
                                 setState(() {
