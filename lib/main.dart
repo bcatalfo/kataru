@@ -389,86 +389,276 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _preloadNextStory() async {
-    final promptText = _buildPromptText();
+    // Step 1: Generate an idea for the story
+    final idea = await _generateStoryIdea();
 
-    final model =
-        FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-pro-001');
+    // Step 2: Turn the idea into detailed chapter outlines
+    final chapterOutlines = await _createChapters(idea);
 
-    final prompt = [Content.text(promptText)];
+    // Step 3: Fill out each chapter
+    final difficultyDescription = _getDifficultyDescription();
+    final chapters = await _generateChapters(
+        chapterOutlines, difficultyDescription, idea['title'], idea['outline']);
 
-    debugPrint('prompt: $promptText');
-    final response = await model.generateContent(prompt);
+    // Step 4: Check for coherence and fix errors
+    final improvedStory = await _checkAndImproveStory(chapters.join('\n\n'),
+        idea['title'], idea['outline'], difficultyDescription);
 
-    debugPrint('Generated Story: ${response.text}');
-
-    // Process and clean up the response text
-    final parts = response.text?.split('|SEPARATOR|') ?? [];
-    final storyPart =
-        parts.isNotEmpty ? parts[0].replaceAll(r'\n', '\n').trim() : '';
-    final translationPart =
-        parts.length > 1 ? parts[1].replaceAll(r'\n', '\n').trim() : '';
-
-    // Remove "##" from the beginning of the story and translation using regex
-    final cleanedStoryPart = storyPart.replaceAll(RegExp(r'^##\s*'), '');
-    final cleanedTranslationPart =
-        translationPart.replaceAll(RegExp(r'^##\s*'), '');
-
+    // Store the preloaded story without translation
     _preloadedStory = {
-      'storyPart': cleanedStoryPart,
-      'translationPart': cleanedTranslationPart,
+      'storyPart': improvedStory,
+      'translationPart': '', // No translation part for now
     };
 
     // Preload audio files with a unique identifier
     final uniqueId = DateTime.now().millisecondsSinceEpoch.toString();
-    await _preloadAudioFiles(cleanedStoryPart, uniqueId);
+    await _preloadAudioFiles(improvedStory, uniqueId);
   }
 
-  String _buildPromptText() {
+  Future<Map<String, dynamic>> _generateStoryIdea() async {
     if (_selectedGenres.isEmpty) {
       _selectedGenres = genres.toList();
     }
 
     final targetLanguage = _languages
         .firstWhere((lang) => lang['code'] == _targetLanguage)['name']!;
-    final nativeLanguage = _languages
-        .firstWhere((lang) => lang['code'] == _nativeLanguage)['name']!;
 
     final shuffledGenres = _selectedGenres.toList()..shuffle();
     final randomGenre = shuffledGenres.first;
 
-    String difficultyDescription;
-
-    switch (_difficultyLevel) {
-      case 'Absolute Beginner':
-        difficultyDescription = 'Use extremely simple vocabulary and grammar.';
-        break;
-      case 'Beginner':
-        difficultyDescription = 'Use very simple vocabulary and grammar.';
-        break;
-      case 'Intermediate':
-        difficultyDescription = 'Use simple vocabulary and grammar.';
-        break;
-      case 'Advanced':
-        difficultyDescription = 'Use typical vocabulary and grammar.';
-        break;
-      case 'Expert':
-        difficultyDescription = 'Use sophisticated vocabulary and grammar.';
-        break;
-      default:
-        difficultyDescription = 'Use extremely simple vocabulary and grammar.';
-    }
+    final difficultyDescription = _getDifficultyDescription();
 
     String characterRequirement = '';
     if (_targetLanguage == 'zh-TW') {
       characterRequirement =
-          'Use Traditional Chinese characters and the Chinese used in Taiwan. Do not use Simplified Chinese characters. ';
+          'Use Traditional Chinese characters and the Chinese used in Taiwan. Do not use Simplified Chinese characters.';
     }
 
-    return 'Write a story in $targetLanguage. $difficultyDescription '
-        'The story should be in the genre of $randomGenre. '
+    final promptText =
+        'Generate a unique story idea in $targetLanguage. $difficultyDescription '
+        'Include a captivating title and an outline for each part of the five-act structure. '
+        'Format the response as follows:\n'
+        'Title: [insert title]\n'
+        'Exposition: [insert exposition here]\n'
+        'Inciting Incident: [insert inciting incident here]\n'
+        'Rising Action: [insert rising action here]\n'
+        'Climax: [insert climax here]\n'
+        'Falling Action: [insert falling action here]\n'
+        'Denouement: [insert denouement here]\n'
+        'Do not include romanizations or translations of the content.\n'
         '$characterRequirement'
-        'Each sentence must be separated by a newline character "\n". Translate the story into $nativeLanguage. '
-        'Format the output with the story first, followed by "|SEPARATOR|", and then the translation.';
+        'The story should be in the genre of $randomGenre.';
+
+    final model =
+        FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-pro-001');
+    final prompt = [Content.text(promptText)];
+
+    debugPrint('Prompt for Story Idea: $promptText');
+    final response = await model.generateContent(prompt);
+
+    debugPrint('Generated Idea: ${response.text}');
+
+    final lines = response.text?.split('\n') ?? [];
+    String title = '';
+    String exposition = '';
+    String incitingIncident = '';
+    String risingAction = '';
+    String climax = '';
+    String fallingAction = '';
+    String denouement = '';
+
+    for (int i = 0; i < lines.length; i++) {
+      final line = _removeMarkdownSyntax(lines[i].trim());
+      debugPrint('Processing line: $line'); // Debug statement
+
+      if (line.startsWith('Title:')) {
+        title = line.replaceFirst('Title: ', '').trim();
+      } else if (line.startsWith('Exposition:')) {
+        exposition = _extractTextBlock(lines, i);
+      } else if (line.startsWith('Inciting Incident:')) {
+        incitingIncident = _extractTextBlock(lines, i);
+      } else if (line.startsWith('Rising Action:')) {
+        risingAction = _extractTextBlock(lines, i);
+      } else if (line.startsWith('Climax:')) {
+        climax = _extractTextBlock(lines, i);
+      } else if (line.startsWith('Falling Action:')) {
+        fallingAction = _extractTextBlock(lines, i);
+      } else if (line.startsWith('Denouement:')) {
+        denouement = _extractTextBlock(lines, i);
+      }
+    }
+
+    debugPrint('Title: $title');
+    debugPrint('Exposition: $exposition');
+    debugPrint('Inciting Incident: $incitingIncident');
+    debugPrint('Rising Action: $risingAction');
+    debugPrint('Climax: $climax');
+    debugPrint('Falling Action: $fallingAction');
+    debugPrint('Denouement: $denouement');
+
+    return {
+      'title': title,
+      'outline': [
+        'Exposition: $exposition',
+        'Inciting Incident: $incitingIncident',
+        'Rising Action: $risingAction',
+        'Climax: $climax',
+        'Falling Action: $fallingAction',
+        'Denouement: $denouement',
+      ],
+    };
+  }
+
+  String _extractTextBlock(List<String> lines, int startIndex) {
+    StringBuffer buffer = StringBuffer();
+    for (int i = startIndex + 1; i < lines.length; i++) {
+      final line = _removeMarkdownSyntax(lines[i].trim());
+      if (line.isEmpty) break;
+      buffer.writeln(line);
+      debugPrint('Extracting text block: $line'); // Debug statement
+    }
+    return buffer.toString().trim();
+  }
+
+  String _removeMarkdownSyntax(String text) {
+    return text.replaceAll('*', '').replaceAll('#', '');
+  }
+
+  Future<List<String>> _createChapters(Map<String, dynamic> idea) async {
+    final promptText =
+        'Given the following story idea, create detailed chapter outlines. '
+        'Each chapter outline should specify the key events and developments, and the number of chapters should be between 10 and 15. Format the response as follows:\n'
+        'Chapter 1: [outline of chapter 1]\n'
+        'Chapter 2: [outline of chapter 2]\n'
+        '...\n\n'
+        'Story Idea:\n'
+        'Title: ${idea['title']}\n'
+        'Exposition: ${idea['outline'][0]}\n'
+        'Inciting Incident: ${idea['outline'][1]}\n'
+        'Rising Action: ${idea['outline'][2]}\n'
+        'Climax: ${idea['outline'][3]}\n'
+        'Falling Action: ${idea['outline'][4]}\n'
+        'Denouement: ${idea['outline'][5]}';
+
+    final model =
+        FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-pro-001');
+    final prompt = [Content.text(promptText)];
+
+    debugPrint('Prompt for Chapter Outlines: $promptText');
+    final response = await model.generateContent(prompt);
+
+    debugPrint('Generated Chapters: ${response.text}');
+    final lines = response.text?.split('\n') ?? [];
+    final chapters = lines
+        .where((line) => line.startsWith('Chapter '))
+        .map((line) => line.trim())
+        .toList();
+
+    return chapters;
+  }
+
+  String _getDifficultyDescription() {
+    switch (_difficultyLevel) {
+      case 'Absolute Beginner':
+        return 'Use extremely simple vocabulary, grammar, and sentence complexity.';
+      case 'Beginner':
+        return 'Use very simple vocabulary, grammar, and sentence complexity.';
+      case 'Intermediate':
+        return 'Use simple vocabulary, grammar, and sentence complexity.';
+      case 'Advanced':
+        return 'Use typical vocabulary, grammar, and sentence complexity.';
+      case 'Expert':
+        return 'Use sophisticated vocabulary, grammar, and sentence complexity.';
+      default:
+        return 'Use extremely simple vocabulary, grammar, and sentence complexity.';
+    }
+  }
+
+  Future<List<String>> _generateChapters(List<String> chapterOutlines,
+      String difficultyDescription, String title, List<String> outline) async {
+    final model =
+        FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-pro-001');
+    List<String> chapters = [];
+    String previousChapters = '';
+
+    for (int i = 0; i < chapterOutlines.length; i++) {
+      final chapterOutline = chapterOutlines[i];
+      final promptText =
+          'Based on the following story outline, write a detailed chapter. '
+          'Include multiple characters, dialogue, and follow the five-act structure.\n'
+          'Title: $title\n'
+          'Story Outline: ${outline.join('\n')}\n'
+          'Previous Chapters: $previousChapters\n'
+          'Current Chapter Outline: $chapterOutline\n'
+          '$difficultyDescription';
+
+      final prompt = [Content.text(promptText)];
+
+      debugPrint('Prompt for Chapter: $promptText');
+      final response = await model.generateContent(prompt);
+
+      debugPrint('Generated Chapter: ${response.text}');
+      final chapter = response.text ?? '';
+      chapters.add(chapter);
+      previousChapters += chapter + '\n';
+    }
+
+    return chapters;
+  }
+
+  Future<String> _checkAndImproveStory(String fullStory, String title,
+      List<String> outline, String difficultyDescription) async {
+    final promptText =
+        'Review the following story for coherence and make any necessary improvements:\n'
+        'Title: $title\n'
+        'Story Outline: ${outline.join('\n')}\n'
+        'Full Story:\n$fullStory\n'
+        '$difficultyDescription';
+
+    final model =
+        FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-pro-001');
+    final prompt = [Content.text(promptText)];
+
+    debugPrint('Prompt for Checking and Improving Story: $promptText');
+    final response = await model.generateContent(prompt);
+
+    debugPrint('Improved Story: ${response.text}');
+    return response.text ?? fullStory;
+  }
+
+  Future<Map<String, String>> _translateStory(
+      List<String> improvedStory, String title, List<String> outline) async {
+    final nativeLanguage = _languages
+        .firstWhere((lang) => lang['code'] == _nativeLanguage)['name']!;
+
+    List<String> translatedChapters = [];
+    String previousChapters = '';
+
+    final model =
+        FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-pro-001');
+
+    for (final chapter in improvedStory) {
+      final promptText =
+          'Translate the following chapter into $nativeLanguage, ensuring context and coherence with the rest of the story:\n\n'
+          'Story Title: $title\n\n'
+          'Story Outline: ${outline.join('\n')}\n\n'
+          'Previous Chapters:\n$previousChapters\n\n'
+          'Chapter to Translate: $chapter';
+
+      final prompt = [Content.text(promptText)];
+
+      debugPrint('Prompt for Translating Chapter: $promptText');
+      final response = await model.generateContent(prompt);
+
+      debugPrint('Translated Chapter: ${response.text}');
+      translatedChapters.add(response.text ?? '');
+      previousChapters += chapter + '\n\n';
+    }
+
+    return {
+      'story': improvedStory.join('\n\n'),
+      'translation': translatedChapters.join('\n\n'),
+    };
   }
 
   Future<void> _preloadAudioFiles(String storyPart, String uniqueId) async {
@@ -890,10 +1080,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         'Break down the following sentence in ${_nativeLanguage}, providing romanizations only once for words in languages that do not use the Roman alphabet, and explaining the meaning and grammatical function of each word while avoiding explanations of obvious punctuation like commas: "$sentence"';
     final response = await model.generateContent([Content.text(prompt)]);
     return response.text ?? 'No breakdown available';
-  }
-
-  String _removeMarkdownSyntax(String text) {
-    return text.replaceAll('*', '').replaceAll('#', '');
   }
 
   @override
