@@ -383,8 +383,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       _isStoryLoading = true;
     });
 
-    // Show interstitial ad randomly
-    if (Random().nextInt(20) == 0 && _isInterstitialAdReady) {
+    // Show interstitial ad after every story
+    if (_isInterstitialAdReady) {
       _showInterstitialAd();
       return; // Do not generate a story now, it will be handled in the ad callback
     }
