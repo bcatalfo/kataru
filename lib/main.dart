@@ -147,6 +147,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   late Animation<double> _fadeAnimation;
   Map<String, dynamic>? _preloadedStory;
   List<File> _preloadedAudioFiles = [];
+  BannerAd? _bannerAd;
+  bool _isBannerAdReady = false;
 
   final List<Map<String, String>> _languages = [
     {'name': 'Afrikaans (South Africa) 🇿🇦', 'code': 'af-ZA'},
@@ -271,6 +273,31 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       parent: _animationController,
       curve: Curves.easeOut,
     ));
+
+    // Load the banner ad
+    _loadBannerAd();
+  }
+
+  void _loadBannerAd() {
+    _bannerAd = BannerAd(
+      adUnitId: 'ca-app-pub-3940256099942544/2435281174',
+      request: AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (Ad ad) {
+          setState(() {
+            _isBannerAdReady = true;
+          });
+        },
+        onAdFailedToLoad: (Ad ad, LoadAdError error) {
+          ad.dispose();
+          setState(() {
+            _isBannerAdReady = false;
+          });
+          print('BannerAd failed to load: $error');
+        },
+      ),
+    )..load();
   }
 
   @override
@@ -1188,88 +1215,101 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           ),
         ],
       ),
-      body: GestureDetector(
-        onVerticalDragEnd: (details) {
-          if (details.primaryVelocity! < 0) {
-            debugPrint('Swipe up detected');
-            _playNextStory();
-          }
-        },
-        child: Container(
-          color: Colors.transparent, // Ensure the container is tappable
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_isInitialLoad) ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+      body: Column(
+        children: [
+          if (_isBannerAdReady)
+            Container(
+              color: Colors.transparent,
+              width: _bannerAd!.size.width.toDouble(),
+              height: _bannerAd!.size.height.toDouble(),
+              child: AdWidget(ad: _bannerAd!),
+            ),
+          Expanded(
+            child: GestureDetector(
+              onVerticalDragEnd: (details) {
+                if (details.primaryVelocity! < 0) {
+                  debugPrint('Swipe up detected');
+                  _playNextStory();
+                }
+              },
+              child: Container(
+                color: Colors.transparent, // Ensure the container is tappable
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const CircularProgressIndicator(),
-                            const SizedBox(width: 10),
-                            const Text("Loading story..."),
+                            if (_isInitialLoad) ...[
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const CircularProgressIndicator(),
+                                  const SizedBox(width: 10),
+                                  const Text("Loading story..."),
+                                ],
+                              ),
+                            ] else ...[
+                              Text(
+                                '${_sentenceIndex + 1} / ${_sentences.length}',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              SelectableText(
+                                _currentSentence,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              SelectableText(
+                                _currentSentenceTranslation,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                              const SizedBox(
+                                  height:
+                                      20), // Space between translation and swipe up
+                              if (_isStoryLoading) ...[
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const CircularProgressIndicator(),
+                                    const SizedBox(width: 10),
+                                    const Text("Loading next story..."),
+                                  ],
+                                ),
+                              ] else ...[
+                                const Text(
+                                  "Swipe up for a new story",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ],
                         ),
-                      ] else ...[
-                        Text(
-                          '${_sentenceIndex + 1} / ${_sentences.length}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        SelectableText(
-                          _currentSentence,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 24,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        SelectableText(
-                          _currentSentenceTranslation,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                        const SizedBox(
-                            height:
-                                20), // Space between translation and swipe up
-                        if (_isStoryLoading) ...[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const CircularProgressIndicator(),
-                              const SizedBox(width: 10),
-                              const Text("Loading next story..."),
-                            ],
-                          ),
-                        ] else ...[
-                          const Text(
-                            "Swipe up for a new story",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ],
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
       bottomNavigationBar: SafeArea(
         child: Row(
