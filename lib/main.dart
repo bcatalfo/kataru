@@ -228,7 +228,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     "Mystery",
     "Supernatural",
     "Crime",
-    "Slice of Life"
+    "Slice of Life",
+    "Biographies",
+    "Travel",
+    "Mythology",
+    "Self-help",
+    "Children's stories",
+    "Fairy tales",
+    "Poetry"
   ];
 
   List<String> _selectedGenres = [];
