@@ -5,24 +5,24 @@ PODS:
     - PromisesObjC (~> 2.3)
   - audioplayers_darwin (0.0.1):
     - Flutter
-  - Firebase/Auth (10.28.0):
+  - Firebase/Auth (10.29.0):
     - Firebase/CoreOnly
-    - FirebaseAuth (~> 10.28.0)
-  - Firebase/CoreOnly (10.28.0):
-    - FirebaseCore (= 10.28.0)
-  - firebase_app_check (0.3.0-3):
-    - Firebase/CoreOnly (~> 10.28.0)
+    - FirebaseAuth (~> 10.29.0)
+  - Firebase/CoreOnly (10.29.0):
+    - FirebaseCore (= 10.29.0)
+  - firebase_app_check (0.3.0-4):
+    - Firebase/CoreOnly (~> 10.29.0)
     - firebase_core
-    - FirebaseAppCheck (~> 10.28.0)
+    - FirebaseAppCheck (~> 10.29.0)
     - Flutter
-  - firebase_auth (5.1.2):
-    - Firebase/Auth (= 10.28.0)
+  - firebase_auth (5.1.4):
+    - Firebase/Auth (= 10.29.0)
     - firebase_core
     - Flutter
-  - firebase_core (3.2.0):
-    - Firebase/CoreOnly (= 10.28.0)
+  - firebase_core (3.3.0):
+    - Firebase/CoreOnly (= 10.29.0)
     - Flutter
-  - FirebaseAppCheck (10.28.0):
+  - FirebaseAppCheck (10.29.0):
     - AppCheckCore (~> 10.19)
     - FirebaseAppCheckInterop (~> 10.28)
     - FirebaseCore (~> 10.18)
@@ -30,14 +30,14 @@ PODS:
     - GoogleUtilities/UserDefaults (~> 7.13)
     - PromisesObjC (~> 2.1)
   - FirebaseAppCheckInterop (10.29.0)
-  - FirebaseAuth (10.28.0):
+  - FirebaseAuth (10.29.0):
     - FirebaseAppCheckInterop (~> 10.17)
     - FirebaseCore (~> 10.0)
     - GoogleUtilities/AppDelegateSwizzler (~> 7.8)
     - GoogleUtilities/Environment (~> 7.8)
     - GTMSessionFetcher/Core (< 4.0, >= 2.1)
     - RecaptchaInterop (~> 100.0)
-  - FirebaseCore (10.28.0):
+  - FirebaseCore (10.29.0):
     - FirebaseCoreInternal (~> 10.0)
     - GoogleUtilities/Environment (~> 7.12)
     - GoogleUtilities/Logger (~> 7.12)
@@ -138,14 +138,14 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   AppCheckCore: 9feb4300caa596a36416cde10674dc5bec1e022e
   audioplayers_darwin: 877d9a4d06331c5c374595e46e16453ac7eafa40
-  Firebase: 5121c624121af81cbc81df3bda414b3c28c4f3c3
-  firebase_app_check: d26a83129d5bfe1fd66b9c2f3432fb3df486eee5
-  firebase_auth: e778ee89483b86fe4200d1f8e9a1c52aa5fb64a8
-  firebase_core: a9d0180d5285527884d07a41eb4a9ec9ed12cdb6
-  FirebaseAppCheck: 94bcff56401058ba9f7343fff086380ffb987ed6
+  Firebase: cec914dab6fd7b1bd8ab56ea07ce4e03dd251c2d
+  firebase_app_check: bf48979c0d6d350452f3615eb1d557bacd3ff256
+  firebase_auth: 8dbfcdd635cc4fb2ea213aeee8c9a979b3d3373b
+  firebase_core: 57aeb91680e5d5e6df6b888064be7c785f146efb
+  FirebaseAppCheck: a071fc2cfbc877898f7546b2d59d4a30a728ebae
   FirebaseAppCheckInterop: 6a1757cfd4067d8e00fccd14fcc1b8fd78cfac07
-  FirebaseAuth: 3d872fbbfc4223edeb72769e488f325fa8b0a4a9
-  FirebaseCore: 857dc1c6dd1255675047404d8466f7dfaac5d779
+  FirebaseAuth: e2ebfaf9fb4638a1c9a3b0efd17d1b90943987cd
+  FirebaseCore: 30e9c1cbe3d38f5f5e75f48bfcea87d7c358ec16
   FirebaseCoreInternal: df84dd300b561c27d5571684f389bf60b0a5c934
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   Google-Mobile-Ads-SDK: 5a6d005a6cb5b5e8f4c7b69ca05cdea79c181139
