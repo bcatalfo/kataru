@@ -1,1 +1,43 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"kataru-b341b","appId":"1:104044212185:android:0d2564e7142b79a2d473c8","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"kataru-b341b","appId":"1:104044212185:ios:83dd742fae821c35d473c8","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"kataru-b341b","configurations":{"android":"1:104044212185:android:0d2564e7142b79a2d473c8","ios":"1:104044212185:ios:83dd742fae821c35d473c8"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "kataru-b341b",
+          "appId": "1:104044212185:android:0d2564e7142b79a2d473c8",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "kataru-b341b",
+          "appId": "1:104044212185:ios:83dd742fae821c35d473c8",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "kataru-b341b",
+          "configurations": {
+            "android": "1:104044212185:android:0d2564e7142b79a2d473c8",
+            "ios": "1:104044212185:ios:83dd742fae821c35d473c8"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "venv",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
+}
