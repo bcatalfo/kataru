@@ -156,6 +156,7 @@ def generate_story():
 
     # Clean up the response by removing the ```json and ``` markers
     cleaned_response_text = response.text.strip("```json").strip("```").strip()
+    print(f"Cleaned response text: {cleaned_response_text}")
 
     try:
         story = json.loads(cleaned_response_text)
