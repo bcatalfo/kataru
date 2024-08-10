@@ -154,8 +154,11 @@ def generate_story():
     if not response.text:
         return flask.jsonify({'error': 'Empty response from Vertex AI'}), 500
 
+    # Clean up the response by removing the ```json and ``` markers
+    cleaned_response_text = response.text.strip("```json").strip("```").strip()
+
     try:
-        story = json.loads(response.text)
+        story = json.loads(cleaned_response_text)
     except json.JSONDecodeError as e:
         print(f"JSONDecodeError: {e}")
         return flask.jsonify({'error': 'Failed to decode JSON response'}), 500
