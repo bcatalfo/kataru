@@ -145,7 +145,7 @@ def generate_story():
 
     # Initialize Vertex AI
     vertexai.init(project="kataru-b341b", location="us-central1")
-    model = GenerativeModel(model_name="gemini-pro")
+    model = GenerativeModel(model_name="gemini-1.5-pro-001")
 
     # Generate story using Vertex AI
     response = model.generate_content(prompt_text)
